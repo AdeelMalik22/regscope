@@ -15,7 +15,7 @@ pushed before the next milestone begins.
 
 ## Phase 0 — Project foundation
 
-### Commit 1: package skeleton and import foundation
+### Commit 1: package skeleton, packaging, and CI foundation
 
 - Lock the project name to **RegScope**: package/import path `regscope` and CLI
   command `regscope`.
@@ -23,7 +23,9 @@ pushed before the next milestone begins.
 - Add package metadata and a `pyproject.toml` with stdlib-only runtime
   dependencies and development extras.
 - Add a minimal public package version, type hints, and a `py.typed` marker.
-- Add the initial local test configuration.
+- Add the initial test configuration and CI matrix for supported Python
+  versions (3.9–3.12 initially).
+- Validate sdist and wheel build/install in CI before feature work begins.
 
 ### Commit 2: documentation and repository hygiene
 
@@ -32,11 +34,6 @@ pushed before the next milestone begins.
 - Add a focused `.gitignore`.
 - Keep `regscope_idea.md` as the product specification.
 
-### Deferred: CI and distribution validation
-
-- Add the multi-version CI matrix after the core tracking library is working.
-- Add sdist/wheel build and clean-install validation before the first release.
-- Keep this work out of the initial library implementation commits.
 
 ## Phase 1 — v0.1 tracking core
 

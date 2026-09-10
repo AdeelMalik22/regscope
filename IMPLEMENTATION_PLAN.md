@@ -1,6 +1,6 @@
-# FunctionDNA Implementation Plan
+# RegScope Implementation Plan
 
-This plan turns `redscope_idea.md` into incremental, independently committed
+This plan turns `regscope_idea.md` into incremental, independently committed
 implementation work. Each milestone is completed, tested, committed, and
 pushed before the next milestone begins.
 
@@ -15,20 +15,24 @@ pushed before the next milestone begins.
 
 ## Phase 0 — Project foundation
 
-### Commit 1: package skeleton and development configuration
+### Commit 1: package skeleton, packaging, and CI foundation
 
-- Create the `funcdna/` package and test package.
+- Lock the project name to **RegScope**: package/import path `regscope` and CLI
+  command `regscope`.
+- Create the `regscope/` package and test package.
 - Add package metadata and a `pyproject.toml` with stdlib-only runtime
   dependencies and development extras.
-- Add a minimal public package version and a clean import path.
-- Add the initial test configuration.
+- Add a minimal public package version, type hints, and a `py.typed` marker.
+- Add the initial test configuration and CI matrix for supported Python
+  versions (3.9–3.12 initially).
+- Validate sdist and wheel build/install in CI before feature work begins.
 
 ### Commit 2: documentation and repository hygiene
 
 - Add a README with the observed-behavior disclaimer, MVP scope, and quick
   start direction.
 - Add a focused `.gitignore`.
-- Keep the existing project idea document as the product specification.
+- Keep `regscope_idea.md` as the product specification.
 
 ## Phase 1 — v0.1 tracking core
 
@@ -47,7 +51,10 @@ pushed before the next milestone begins.
   exception or changing the wrapped function's return value.
 - Add call tracking with `sys.setprofile()` and restore any prior profiler in
   a `finally` block.
-- Test nested calls, exceptions, recursion, and profiler restoration.
+- Define the v0.1 limitation: profiling is process-global and concurrent
+  tracking/profiler ownership is unsupported; document the limitation.
+- Test nested calls, exceptions, recursion, profiler restoration, and running
+  under an existing profiler/coverage session without corrupting its data.
 
 ### Commit 5: call-graph representation
 
@@ -69,10 +76,9 @@ pushed before the next milestone begins.
 ### Commit 7: `@track` public API and configuration
 
 - Expose `track` from the package root.
-- Support zero-config defaults first, including a configurable output/baseline
-  directory and collector options where they are needed.
-- Support decorator usage both as `@track` and with explicit options if that
-  configuration is finalized during implementation.
+- Support both `@track` and `@track(...)` in v0.1.
+- Make `baseline_dir` an explicit optional decorator/configuration setting,
+  with a documented default; do not add per-call parameter capture.
 - Add public API tests.
 
 ## Phase 2 — baseline storage and comparison
@@ -84,13 +90,15 @@ pushed before the next milestone begins.
 - Include package/schema version and enough metadata to detect incompatible
   records.
 - Add tests for creation, append, retention, malformed files, and safe failure.
+- Use a lock or per-function files so parallel workers cannot overwrite one
+  another; test concurrent writes and pytest-xdist-style isolation.
 
 ### Commit 9: noise-aware comparison engine
 
 - Compare new observations against the previous run distribution rather than
   a single value.
-- Start with explicit configurable percentage thresholds and a documented
-  default; keep the engine extensible for standard-deviation thresholds later.
+- Start with an explicit configurable **20% default threshold**; keep the
+  engine extensible for standard-deviation thresholds later.
 - Report median, range, delta, percentage change, and regression status.
 - Treat missing metrics and incompatible schemas as explicit outcomes.
 - Add tests for stable values, noisy values, outliers, and threshold boundaries.
@@ -107,7 +115,9 @@ pushed before the next milestone begins.
 ### Commit 11: optional SQL query collector
 
 - Add a SQLAlchemy extra and lazy import path.
-- Count executed SQL statements through SQLAlchemy event hooks.
+- Count executed SQL statements through SQLAlchemy event hooks. Never capture
+  raw SQL text, table names, bound parameters, or query results in profiles or
+  baselines; this is a permanent count-only privacy constraint.
 - Keep the base package importable without SQLAlchemy installed.
 - Raise a clear installation message when the collector is requested without
   its extra.
@@ -124,7 +134,17 @@ pushed before the next milestone begins.
 - Test successful comparisons, detected regressions, malformed input, and
   exit status.
 
-### Commit 13: pytest plugin and CI exit codes
+### Commit 13: persistent CI baseline workflow design
+
+- Define the baseline transport before implementing the plugin: CI artifacts
+  are the default persistence mechanism, downloaded before comparison and
+  uploaded only by the trusted target-branch baseline job.
+- Document artifact naming, retention, missing-baseline behavior, and how a
+  PR job receives the target branch baseline.
+- Keep committed baselines and external object storage as future adapters,
+  not hidden assumptions in the core API.
+
+### Commit 14: pytest plugin and CI exit codes
 
 - Add an optional pytest integration without making pytest a runtime
   dependency.
@@ -132,6 +152,16 @@ pushed before the next milestone begins.
   functions.
 - Return non-zero status only for configured regressions or invalid setup.
 - Test baseline creation, comparison failure, and clean CI runs.
+- Test a fresh checkout with a downloaded baseline, missing artifacts, and
+  baseline updates from the target branch.
+
+### Commit 15: instrumentation overhead benchmark
+
+- Benchmark tracking against an untracked synthetic deep-recursion and
+  high-call-count workload across the supported Python versions.
+- Record timing overhead and variance as the tool's measurement noise floor.
+- Use the results to validate the 20% default threshold and document when
+  users should disable call-graph collection.
 
 ## Phase 5 — later collectors and v1.0 stabilization
 
@@ -152,4 +182,3 @@ absent-dependency tests:
 - Public behavior and baseline schema changes are intentional and documented.
 - The change is committed separately with a descriptive message.
 - The commit is pushed to the configured remote before starting the next step.
-

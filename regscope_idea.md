@@ -1,6 +1,7 @@
-# FunctionDNA — Full Project Spec
+# RegScope — Product Specification
 
-**Status:** Idea finalized, ready for implementation planning. No code written yet.
+**Status:** Product specification finalized. RegScope implementation is active
+and the current package is an early `0.1.0.dev0` release.
 
 This document contains everything decided so far. It's meant to be handed to an AI (or a human) to produce a concrete implementation plan and begin work.
 
@@ -30,9 +31,9 @@ Traditional profilers show *current* behavior. APM tools show *production* behav
 |---|---|---|---|
 | Profilers | cProfile, py-spy, scalene | Current behavior, in detail | No memory of the past, no diffing |
 | APM tools | Datadog, New Relic | Production behavior over time | No per-function before/after diff tied to a code change |
-| **FunctionDNA** | — | **Per-function behavioral diff, tied to a code change, run in CI** | — |
+| **RegScope** | — | **Per-function behavioral diff, tied to a code change, run in CI** | — |
 
-**Explicit non-claim:** FunctionDNA does NOT claim two functions are mathematically equivalent. It compares *observed* runtime behavior between versions. This distinction should appear in the README's first section to avoid misrepresenting what the tool guarantees.
+**Explicit non-claim:** RegScope does NOT claim two functions are mathematically equivalent. It compares *observed* runtime behavior between versions. This distinction appears in the README's first section to avoid misrepresenting what the tool guarantees.
 
 ## 4. Primary use cases (in priority order for MVP focus)
 
@@ -45,7 +46,7 @@ Traditional profilers show *current* behavior. APM tools show *production* behav
 ## 5. Example usage (target v0.1–v0.3 API shape)
 
 ```python
-from funcdna import track
+from regscope import track
 
 @track
 def get_user_dashboard(user_id):
@@ -169,17 +170,17 @@ Do not build Postgres + Redis + HTTP collectors simultaneously. Each is its own 
 
 ### Collectors (v0.2+) — optional extras, lazy-imported
 ```
-pip install funcdna[db]      # SQLAlchemy event hooks
-pip install funcdna[http]    # requests/httpx patching
-pip install funcdna[redis]   # redis-py instrumentation
-pip install funcdna[all]     # everything
+pip install regscope[db]      # SQLAlchemy event hooks
+pip install regscope[http]    # requests/httpx patching
+pip install regscope[redis]   # redis-py instrumentation
+pip install regscope[integration]  # supported integrations
 ```
-Each collector's import must be lazy and guarded, only touched when that specific collector is invoked. On a missing optional dependency, raise a clear message ("install `funcdna[db]` to use SQL query tracking") rather than crashing on import of the whole package or crashing on an unrelated code path.
+Each collector's import must be lazy and guarded, only touched when that specific collector is invoked. On a missing optional dependency, raise a clear message ("install `regscope[db]` to use SQL query tracking") rather than crashing on import of the whole package or crashing on an unrelated code path.
 
-**Cautionary precedent:** In testing RequestGuard, a real bug was found where a Flask-specific code branch did an unconditional `from flask import g` triggered by duck-typing on a `remote_addr` attribute — this crashed with `ModuleNotFoundError` for *any* object with that attribute, even unrelated to Flask, since Flask isn't a required dependency. **Every optional-integration import path in FunctionDNA must be wrapped in try/except ImportError with a graceful fallback or clear error, and explicitly tested with that dependency absent.**
+**Cautionary precedent:** In testing RequestGuard, a real bug was found where a Flask-specific code branch did an unconditional `from flask import g` triggered by duck-typing on a `remote_addr` attribute — this crashed with `ModuleNotFoundError` for *any* object with that attribute, even unrelated to Flask, since Flask isn't a required dependency. **Every optional-integration import path in RegScope must be wrapped in try/except ImportError with a graceful fallback or clear error, and explicitly tested with that dependency absent.**
 
 ### CLI
-Use **`argparse`** (stdlib) for v0.1–v0.3 to preserve the zero-required-dependency promise end-to-end, including the CLI. A `funcdna[cli]` extra with `typer`/`click` for a nicer UX can be added later without breaking the dependency-free base install.
+Use **`argparse`** (stdlib) for v0.1–v0.3 to preserve the zero-required-dependency promise end-to-end, including the CLI. A `regscope[cli]` extra with `typer`/`click` for a nicer UX can be added later without breaking the dependency-free base install.
 
 ### Dev/test tooling (not shipped to end users)
 `pytest`, `pytest-asyncio`, `build`, `twine` — as a `[dev]` extra, same shape as RequestGuard.
@@ -190,20 +191,20 @@ Use **`argparse`** (stdlib) for v0.1–v0.3 to preserve the zero-required-depend
 |---|---|
 | v0.1 | `@track` decorator; timing, call count, exceptions, call graph; N-run baselines; structured JSON storage; fingerprint as a derived checksum; sync + async support |
 | v0.2 | SQL query counting via SQLAlchemy event hooks (one ORM, done well) |
-| v0.3 | `funcdna compare` CLI with the regression report format shown above (argparse-based) |
+| v0.3 | `regscope compare` CLI with the regression report format shown above (argparse-based) |
 | v0.4 | pytest plugin / CI-friendly exit codes — first-class pytest fixture, not just a CLI wrapper. *(Moved up from later in the original draft — this is the strongest use case and validates the real CI pipeline story early, before sinking time into collectors nobody's asked to test yet.)* |
 | v0.5 | HTTP call counting (via `requests`/`httpx` patching) |
 | v0.6 | Redis call counting |
 | v0.7 | Memory tracking via `tracemalloc` (save for last — trickiest to make low-noise) |
 | v1.0 | Stable baseline format, documented noise-threshold tuning, historical trend view |
 
-## 10. Naming — not yet finalized
+## 10. Naming — finalized
 
 Candidates considered, with PyPI availability as last checked (verify again before committing — search coverage isn't exhaustive):
 
 | Name | Notes |
 |---|---|
-| **`funcdna`** | Top candidate. Short, typeable, keeps continuity with the original "FunctionDNA" concept. No conflict found. Minor concern: "DNA" implies identity/genetic equivalence, slightly at odds with the "not mathematically equivalent" positioning. |
+| **`regscope`** | Selected package and project name. It communicates regression-scoped behavior checks and matches the published import and CLI names. |
 | **`behaviordiff`** | Most literal match to the "behavioral diffing" positioning. No exact conflict found. Less distinctive/brandable than a coined name. |
 | `regscope` | Portmanteau of "regression" + "scope" (as in microscope/telescope — an instrument you point at code to see regressions). Reads professional, in the vein of `line_profiler`/`memory_profiler`. Downside: doesn't hint at the cross-version diffing angle on its own — a README/tagline has to do that work. |
 | ~~`functrace`~~ | **Taken** (unrelated function-call tracer). |
@@ -211,7 +212,7 @@ Candidates considered, with PyPI availability as last checked (verify again befo
 | ~~`pydrifter`~~ | **Taken**, and in an awkwardly adjacent space (ML data-drift detection) — real risk of user confusion. |
 | ~~`drift`/`pydrift`~~ | Too generic, high collision risk in the ML-monitoring "drift" naming space. |
 
-**Recommendation if forced to pick now:** `funcdna`. Final call still open — re-verify PyPI availability with a direct `pypi.org/project/<name>/` check (404 = available) before registering.
+**Final naming decision:** `regscope`. The package name, import path, CLI command, repository, and documentation use RegScope consistently.
 
 ## 11. Naming nuance for internal terminology
 

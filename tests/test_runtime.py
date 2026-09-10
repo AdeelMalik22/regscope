@@ -1,6 +1,6 @@
 import pytest
 
-from regscope._runtime import measure_sync
+from regscope.core.runtime import measure_sync
 
 
 def test_measure_sync_preserves_result_and_records_duration() -> None:

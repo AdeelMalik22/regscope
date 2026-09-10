@@ -5,8 +5,8 @@ import pytest
 from regscope import track
 
 
-def test_track_supports_async_functions() -> None:
-    @track
+def test_track_supports_async_functions(tmp_path) -> None:
+    @track(baseline_dir=tmp_path)
     async def get_value() -> int:
         await asyncio.sleep(0)
         return 42
@@ -17,8 +17,8 @@ def test_track_supports_async_functions() -> None:
     assert get_value.last_profile.duration_ns >= 0
 
 
-def test_track_records_async_exception() -> None:
-    @track()
+def test_track_records_async_exception(tmp_path) -> None:
+    @track(baseline_dir=tmp_path)
     async def fail() -> None:
         raise ValueError("expected")
 
@@ -26,3 +26,4 @@ def test_track_records_async_exception() -> None:
         asyncio.run(fail())
 
     assert fail.last_profile.exceptions == 1
+    assert len(list(tmp_path.glob("*.json"))) == 1

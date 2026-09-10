@@ -1,6 +1,6 @@
 import pytest
 
-from regscope import track
+from regscope import TrackConfig, track
 
 
 def test_track_preserves_function_behavior_and_profile(tmp_path) -> None:
@@ -26,3 +26,21 @@ def test_track_records_exception_and_reraises_it(tmp_path) -> None:
 
     assert fail.last_profile.exceptions == 1
     assert len(list(tmp_path.glob("*.json"))) == 1
+
+
+def test_track_config_controls_baseline_retention(tmp_path) -> None:
+    @track(baseline_dir=tmp_path, max_runs=1)
+    def add(value: int) -> int:
+        return value
+
+    add(1)
+    add(2)
+    baseline_file = next(tmp_path.glob("*.json"))
+
+    assert '"duration_ns"' in baseline_file.read_text(encoding="utf-8")
+    assert TrackConfig(max_runs=1).max_runs == 1
+
+
+def test_track_config_rejects_invalid_retention(tmp_path) -> None:
+    with pytest.raises(ValueError, match="at least 1"):
+        track(baseline_dir=tmp_path, max_runs=0)

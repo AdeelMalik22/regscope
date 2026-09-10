@@ -1,6 +1,6 @@
 """RegScope: observed behavioral profiles for Python functions."""
 
-from .api import track
+from .api import TrackConfig, track
 
-__all__ = ["__version__", "track"]
+__all__ = ["TrackConfig", "__version__", "track"]
 __version__ = "0.1.0.dev0"

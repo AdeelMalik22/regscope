@@ -11,6 +11,7 @@ from typing import Any, Callable, Optional, TypeVar, Union, cast
 from ..collectors.call_graph import collect_async_call_graph, collect_call_graph
 from ..models import BehaviorProfile
 from ..storage import BaselineStore
+from .config import TrackConfig
 
 
 T = TypeVar("T")
@@ -21,15 +22,21 @@ def track(
     function: Optional[Function[T]] = None,
     *,
     baseline_dir: Union[PathLike[str], str] = ".regscope",
+    max_runs: int = 5,
 ) -> Any:
     """Decorate a function with runtime collection and baseline persistence."""
+    config = TrackConfig(baseline_dir=baseline_dir, max_runs=max_runs)
     if function is None:
-        return lambda wrapped: track(wrapped, baseline_dir=baseline_dir)
+        return lambda wrapped: track(
+            wrapped,
+            baseline_dir=config.baseline_dir,
+            max_runs=config.max_runs,
+        )
 
     if iscoroutinefunction(function):
-        return _track_async(function, baseline_dir)
+        return _track_async(function, config)
 
-    store = BaselineStore(baseline_dir)
+    store = BaselineStore(config.baseline_dir, max_runs=config.max_runs)
 
     @wraps(function)
     def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -56,9 +63,9 @@ def track(
 
 
 def _track_async(
-    function: Function[T], baseline_dir: Union[PathLike[str], str]
+    function: Function[T], config: TrackConfig
 ) -> Any:
-    store = BaselineStore(baseline_dir)
+    store = BaselineStore(config.baseline_dir, max_runs=config.max_runs)
 
     @wraps(function)
     async def wrapper(*args: Any, **kwargs: Any) -> T:

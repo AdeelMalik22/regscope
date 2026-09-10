@@ -40,3 +40,12 @@ def test_cli_reports_trend(tmp_path, capsys) -> None:
 
     assert main(["trend", "--directory", str(tmp_path), "--function", "example.work"]) == 0
     assert "RegScope Trend" in capsys.readouterr().out
+
+
+def test_cli_supports_machine_readable_output(tmp_path, capsys) -> None:
+    baseline, current = write_profiles(tmp_path, 121)
+
+    assert main([
+        "compare", "--baseline", str(baseline), "--current", str(current), "--json"
+    ]) == 1
+    assert '"risk": "low"' in capsys.readouterr().out

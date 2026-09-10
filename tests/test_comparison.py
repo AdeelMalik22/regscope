@@ -50,6 +50,7 @@ def test_compare_handles_empty_baseline() -> None:
 
     assert result.metrics == []
     assert result.regression is False
+    assert result.status == "baseline_missing"
 
 
 def test_compare_validates_inputs() -> None:
@@ -57,3 +58,12 @@ def test_compare_validates_inputs() -> None:
         compare(make_profile(100), baseline(), threshold=1)
     with pytest.raises(ValueError, match="does not match"):
         compare(make_profile(100), Baseline(function="other.work"))
+
+
+def test_compare_supports_metric_thresholds_and_risk() -> None:
+    result = compare(
+        make_profile(115, exceptions=1), baseline(), thresholds={"duration_ns": 0.5}
+    )
+
+    assert not next(metric for metric in result.metrics if metric.metric == "duration_ns").regression
+    assert result.risk == "high"

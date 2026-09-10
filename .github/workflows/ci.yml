@@ -41,7 +41,9 @@ jobs:
       - name: Generate trusted baseline
         run: |
           rm -rf .regscope
-          python -m scripts.ci_baseline generate --directory .regscope
+          REGSCOPE_TRUSTED_BASELINE=1 python -m pytest tests/ci_targets \
+            --regscope-baseline-dir .regscope \
+            --regscope-update-baseline
       - name: Upload trusted baseline
         if: hashFiles('.regscope/**/*.json') != ''
         uses: actions/upload-artifact@v4
@@ -73,4 +75,4 @@ jobs:
             echo "No trusted baseline artifact is available yet."
           fi
       - name: Compare current behavior with trusted baseline
-        run: python -m scripts.ci_baseline check --directory .regscope
+        run: python -m pytest tests/ci_targets --regscope-baseline-dir .regscope

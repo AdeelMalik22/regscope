@@ -8,9 +8,10 @@ from inspect import iscoroutinefunction
 from functools import wraps
 from os import PathLike
 from typing import Any, Callable, Optional, TypeVar, Union, cast
+from threading import Lock
 
 from ..collectors.call_graph import collect_async_call_graph, collect_call_graph
-from ..core.comparison import compare
+from ..core.comparison import ComparisonResult, compare
 from ..models import BehaviorProfile
 from ..storage import BaselineStore
 from ..trends import HistoryStore
@@ -28,6 +29,7 @@ def track(
     baseline_dir: Union[PathLike[str], str] = ".regscope",
     history_dir: Union[PathLike[str], str] = ".regscope",
     max_runs: int = 5,
+    warmup_runs: int = 0,
     sqlalchemy_engine: Any = None,
     collect_http: bool = False,
     collect_redis: bool = False,
@@ -38,6 +40,7 @@ def track(
         baseline_dir=baseline_dir,
         history_dir=history_dir,
         max_runs=max_runs,
+        warmup_runs=warmup_runs,
         sqlalchemy_engine=sqlalchemy_engine,
         collect_http=collect_http,
         collect_redis=collect_redis,
@@ -49,6 +52,7 @@ def track(
             baseline_dir=config.baseline_dir,
             history_dir=config.history_dir,
             max_runs=config.max_runs,
+            warmup_runs=config.warmup_runs,
             sqlalchemy_engine=config.sqlalchemy_engine,
             collect_http=config.collect_http,
             collect_redis=config.collect_redis,
@@ -66,6 +70,16 @@ def track(
     current_comparison: ContextVar[Any] = ContextVar(
         "regscope_current_comparison", default=None
     )
+    warmups_remaining = config.warmup_runs
+    warmup_lock = Lock()
+
+    def consume_warmup() -> bool:
+        nonlocal warmups_remaining
+        with warmup_lock:
+            if warmups_remaining == 0:
+                return False
+            warmups_remaining -= 1
+            return True
 
     @wraps(function)
     def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -89,12 +103,20 @@ def track(
                 metrics=metrics,
             )
             current_profile.set(wrapper.last_profile)
-            wrapper.last_comparison = compare(
-                wrapper.last_profile, store.load(wrapper.last_profile.function)
-            )
+            if consume_warmup():
+                wrapper.last_comparison = ComparisonResult(
+                    function=wrapper.last_profile.function,
+                    metrics=[],
+                    status="warmup",
+                )
+            else:
+                wrapper.last_comparison = compare(
+                    wrapper.last_profile, store.load(wrapper.last_profile.function)
+                )
             current_comparison.set(wrapper.last_comparison)
-            store.append(wrapper.last_profile)
-            history.record(wrapper.last_profile)
+            if wrapper.last_comparison.status != "warmup":
+                store.append(wrapper.last_profile)
+                history.record(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]
@@ -114,6 +136,16 @@ def _track_async(
     current_comparison: ContextVar[Any] = ContextVar(
         "regscope_current_comparison", default=None
     )
+    warmups_remaining = config.warmup_runs
+    warmup_lock = Lock()
+
+    def consume_warmup() -> bool:
+        nonlocal warmups_remaining
+        with warmup_lock:
+            if warmups_remaining == 0:
+                return False
+            warmups_remaining -= 1
+            return True
 
     @wraps(function)
     async def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -137,12 +169,20 @@ def _track_async(
                 metrics=metrics,
             )
             current_profile.set(wrapper.last_profile)
-            wrapper.last_comparison = compare(
-                wrapper.last_profile, store.load(wrapper.last_profile.function)
-            )
+            if consume_warmup():
+                wrapper.last_comparison = ComparisonResult(
+                    function=wrapper.last_profile.function,
+                    metrics=[],
+                    status="warmup",
+                )
+            else:
+                wrapper.last_comparison = compare(
+                    wrapper.last_profile, store.load(wrapper.last_profile.function)
+                )
             current_comparison.set(wrapper.last_comparison)
-            store.append(wrapper.last_profile)
-            history.record(wrapper.last_profile)
+            if wrapper.last_comparison.status != "warmup":
+                store.append(wrapper.last_profile)
+                history.record(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]

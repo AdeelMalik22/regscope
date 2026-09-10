@@ -51,6 +51,25 @@ def test_track_config_rejects_invalid_retention(tmp_path) -> None:
         track(baseline_dir=tmp_path, max_runs=0)
 
 
+def test_track_discards_configured_warmup_runs(tmp_path) -> None:
+    @track(baseline_dir=tmp_path, warmup_runs=1)
+    def add(value: int) -> int:
+        return value
+
+    assert add(1) == 1
+    assert add.last_comparison.status == "warmup"
+    assert list(tmp_path.glob("*.json")) == []
+
+    assert add(2) == 2
+    assert add.last_comparison.status == "baseline_missing"
+    assert len(list(tmp_path.glob("*.json"))) == 1
+
+
+def test_track_config_rejects_negative_warmup_runs(tmp_path) -> None:
+    with pytest.raises(ValueError, match="must not be negative"):
+        track(baseline_dir=tmp_path, warmup_runs=-1)
+
+
 def test_track_can_collect_memory_metrics(tmp_path) -> None:
     @track(baseline_dir=tmp_path, collect_memory=True)
     def allocate() -> int:

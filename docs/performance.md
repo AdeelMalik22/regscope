@@ -39,6 +39,11 @@ The benchmark is a noise-floor diagnostic, not a pass/fail performance test.
 Its output should be considered alongside CI variance, Python version, and
 workload size.
 
+For cold-start-sensitive functions, configure `@track(warmup_runs=N)`. Warmup
+profiles are still available through the current-profile accessor but are not
+written to baselines or historical trend files. Choose N to cover known
+initialization work; RegScope does not guess which runs are outliers.
+
 ## Profiler ownership
 
 Call-graph collection temporarily installs a `sys.setprofile()` callback for

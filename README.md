@@ -37,6 +37,16 @@ print(total)
 print(profile.duration_ns)
 ```
 
+Use `warmup_runs=N` to execute and report the first N calls without adding
+them to the baseline or historical trend. This is useful when the first call
+opens connections, imports modules, or initializes caches:
+
+```python
+@track(baseline_dir=".regscope", warmup_runs=1)
+def load_dashboard() -> int:
+    return 42
+```
+
 The decorator supports both `@track` and `@track(...)`. Async functions are
 supported transparently:
 

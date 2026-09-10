@@ -1,5 +1,9 @@
 name: CI
 
+permissions:
+  contents: read
+  actions: read
+
 on:
   push:
   pull_request:
@@ -41,7 +45,7 @@ jobs:
       - name: Generate trusted baseline
         run: |
           rm -rf .regscope
-          REGSCOPE_TRUSTED_BASELINE=1 python -m pytest tests/ci_targets \
+          REGSCOPE_CI_BASELINE=1 REGSCOPE_TRUSTED_BASELINE=1 python -m pytest tests/ci_targets \
             --regscope-baseline-dir .regscope \
             --regscope-update-baseline
       - name: Upload trusted baseline
@@ -75,4 +79,4 @@ jobs:
             echo "No trusted baseline artifact is available yet."
           fi
       - name: Compare current behavior with trusted baseline
-        run: python -m pytest tests/ci_targets --regscope-baseline-dir .regscope
+        run: REGSCOPE_CI_BASELINE=1 python -m pytest tests/ci_targets --regscope-baseline-dir .regscope

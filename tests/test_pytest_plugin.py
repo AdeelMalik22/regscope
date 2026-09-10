@@ -71,3 +71,25 @@ def test_plugin_only_updates_with_trusted_flag(tmp_path) -> None:
     trusted = subprocess.run(command, env=environment, capture_output=True, text=True)
     assert trusted.returncode == 0, trusted.stdout + trusted.stderr
     assert len(BaselineStore(baseline_dir).load("sample.target").runs) == 2
+
+
+def test_plugin_fails_when_baseline_is_missing(tmp_path) -> None:
+    test_file = tmp_path / "test_missing.py"
+    test_file.write_text(
+        "from regscope.models import BehaviorProfile\n\n"
+        "def test_profile(regscope_record):\n"
+        "    regscope_record(BehaviorProfile(function='missing.target', duration_ns=1))\n",
+        encoding="utf-8",
+    )
+    result = subprocess.run(
+        [
+            sys.executable, "-m", "pytest", str(test_file),
+            "--regscope-baseline-dir", str(tmp_path / "missing-baseline"),
+        ],
+        env=dict(os.environ, PYTHONPATH=str(tmp_path)),
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode != 0
+    assert "baseline missing" in result.stdout

@@ -63,6 +63,8 @@ def regscope_record(request: pytest.FixtureRequest) -> Callable[[BehaviorProfile
     def record_profile(profile: BehaviorProfile) -> ComparisonResult:
         baseline = store.load(profile.function)
         result = compare(profile, baseline, threshold=threshold)
+        if result.status == "baseline_missing" and not (update_requested and trusted):
+            pytest.fail(f"RegScope baseline missing for {profile.function}")
         if result.regression and not (update_requested and trusted):
             pytest.fail(f"RegScope behavioral regression detected for {profile.function}")
         if update_requested and trusted:

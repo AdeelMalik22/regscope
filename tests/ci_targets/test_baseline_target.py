@@ -1,6 +1,15 @@
 """Representative behavior target used by the CI baseline workflow."""
 
+import os
+
+import pytest
 from regscope import track
+
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("REGSCOPE_CI_BASELINE") != "1",
+    reason="CI baseline target",
+)
 
 
 @track(baseline_dir=".regscope-runtime")

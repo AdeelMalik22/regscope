@@ -11,6 +11,9 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "RegScope contributors" }]
 dependencies = []
+
+[project.scripts]
+regscope = "regscope.cli:main"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

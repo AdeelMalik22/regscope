@@ -11,12 +11,6 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "RegScope contributors" }]
 dependencies = []
-
-[project.scripts]
-regscope = "regscope.cli:main"
-
-[project.entry-points.pytest11]
-regscope = "regscope.pytest_plugin"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -29,6 +23,12 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Testing",
 ]
+
+[project.scripts]
+regscope = "regscope.cli:main"
+
+[project.entry-points.pytest11]
+regscope = "regscope.pytest_plugin"
 
 [project.optional-dependencies]
 dev = ["build", "pytest"]

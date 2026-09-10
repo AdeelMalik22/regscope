@@ -27,6 +27,18 @@ def test_profile_json_is_canonical() -> None:
     assert value.index('"a":"first"') < value.index('"z":"last"')
 
 
+def test_profile_fingerprint_is_stable_and_derived() -> None:
+    original = profile()
+    restored = BehaviorProfile.from_json(original.to_json())
+
+    assert original.fingerprint() == restored.fingerprint()
+    assert len(original.fingerprint()) == 64
+
+
+def test_profile_fingerprint_changes_when_structured_data_changes() -> None:
+    assert profile(100).fingerprint() != profile(101).fingerprint()
+
+
 def test_baseline_keeps_latest_five_runs() -> None:
     baseline = Baseline(function="example.work")
     for duration in range(6):

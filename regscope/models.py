@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Mapping
 
@@ -33,6 +34,10 @@ class BehaviorProfile:
     def to_json(self) -> str:
         """Serialize this profile deterministically."""
         return _canonical_json(self.to_dict())
+
+    def fingerprint(self) -> str:
+        """Return a derived SHA-256 checksum of the structured profile."""
+        return hashlib.sha256(self.to_json().encode("utf-8")).hexdigest()
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "BehaviorProfile":

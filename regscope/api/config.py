@@ -12,6 +12,7 @@ class TrackConfig:
     """Configuration shared by a tracked function's collectors and storage."""
 
     baseline_dir: Union[PathLike[str], str] = ".regscope"
+    history_dir: Union[PathLike[str], str] = ".regscope"
     max_runs: int = 5
     sqlalchemy_engine: Any = None
     collect_http: bool = False

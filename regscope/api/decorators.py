@@ -12,6 +12,7 @@ from ..collectors.call_graph import collect_async_call_graph, collect_call_graph
 from ..core.comparison import compare
 from ..models import BehaviorProfile
 from ..storage import BaselineStore
+from ..trends import HistoryStore
 from .config import TrackConfig
 from .collectors import active_collectors
 
@@ -24,6 +25,7 @@ def track(
     function: Optional[Function[T]] = None,
     *,
     baseline_dir: Union[PathLike[str], str] = ".regscope",
+    history_dir: Union[PathLike[str], str] = ".regscope",
     max_runs: int = 5,
     sqlalchemy_engine: Any = None,
     collect_http: bool = False,
@@ -33,6 +35,7 @@ def track(
     """Decorate a function with runtime collection and baseline persistence."""
     config = TrackConfig(
         baseline_dir=baseline_dir,
+        history_dir=history_dir,
         max_runs=max_runs,
         sqlalchemy_engine=sqlalchemy_engine,
         collect_http=collect_http,
@@ -43,6 +46,7 @@ def track(
         return lambda wrapped: track(
             wrapped,
             baseline_dir=config.baseline_dir,
+            history_dir=config.history_dir,
             max_runs=config.max_runs,
             sqlalchemy_engine=config.sqlalchemy_engine,
             collect_http=config.collect_http,
@@ -54,6 +58,7 @@ def track(
         return _track_async(function, config)
 
     store = BaselineStore(config.baseline_dir, max_runs=config.max_runs)
+    history = HistoryStore(config.history_dir)
 
     @wraps(function)
     def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -80,6 +85,7 @@ def track(
                 wrapper.last_profile, store.load(wrapper.last_profile.function)
             )
             store.append(wrapper.last_profile)
+            history.record(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]
@@ -90,6 +96,7 @@ def _track_async(
     function: Function[T], config: TrackConfig
 ) -> Any:
     store = BaselineStore(config.baseline_dir, max_runs=config.max_runs)
+    history = HistoryStore(config.history_dir)
 
     @wraps(function)
     async def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -116,6 +123,7 @@ def _track_async(
                 wrapper.last_profile, store.load(wrapper.last_profile.function)
             )
             store.append(wrapper.last_profile)
+            history.record(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]

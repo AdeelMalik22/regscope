@@ -59,3 +59,13 @@ def test_track_can_collect_memory_metrics(tmp_path) -> None:
     assert allocate() == 100
     assert allocate.last_profile.metrics["memory_peak"] > 0
     assert "memory_current_delta" in allocate.last_profile.metrics
+
+
+def test_track_records_historical_trend_point(tmp_path) -> None:
+    @track(baseline_dir=tmp_path, history_dir=tmp_path / "history")
+    def work() -> int:
+        return 1
+
+    work()
+
+    assert len(list((tmp_path / "history").glob("*.jsonl"))) == 1

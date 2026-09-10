@@ -94,7 +94,7 @@ Risk: HIGH
 CLI comparison output:
 
 ```
-FunctionDNA Comparison
+RegScope Comparison
 
 get_user
     4ms → 5ms          +25%
@@ -114,7 +114,7 @@ Result: 2 behavioral regressions detected
 ## 6. Architecture
 
 ```
-                FunctionDNA
+                RegScope
                      │
              ┌───────┴───────┐
              ↓               ↓

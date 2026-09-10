@@ -33,6 +33,40 @@ def test_track_records_exception_and_reraises_it(tmp_path) -> None:
     assert len(list(tmp_path.glob("*.json"))) == 1
 
 
+def test_track_does_not_mask_original_exception_when_persistence_fails(
+    tmp_path, monkeypatch
+) -> None:
+    from regscope.storage import BaselineStore
+
+    def fail_to_append(self, profile):
+        raise OSError("storage unavailable")
+
+    monkeypatch.setattr(BaselineStore, "append", fail_to_append)
+
+    @track(baseline_dir=tmp_path)
+    def fail() -> None:
+        raise ValueError("application failure")
+
+    with pytest.raises(ValueError, match="application failure"):
+        fail()
+
+
+def test_track_surfaces_persistence_failure_after_success(tmp_path, monkeypatch) -> None:
+    from regscope.storage import BaselineStore
+
+    def fail_to_append(self, profile):
+        raise OSError("storage unavailable")
+
+    monkeypatch.setattr(BaselineStore, "append", fail_to_append)
+
+    @track(baseline_dir=tmp_path)
+    def succeed() -> str:
+        return "ok"
+
+    with pytest.raises(OSError, match="storage unavailable"):
+        succeed()
+
+
 def test_track_config_controls_baseline_retention(tmp_path) -> None:
     @track(baseline_dir=tmp_path, max_runs=1)
     def add(value: int) -> int:

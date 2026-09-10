@@ -85,38 +85,44 @@ def track(
     def wrapper(*args: Any, **kwargs: Any) -> T:
         started = time.perf_counter_ns()
         exception_count = 0
+        failure: Optional[BaseException] = None
         graph = {}
         metrics = {}
         try:
             with active_collectors(config, metrics):
                 result, graph = collect_call_graph(function, *args, **kwargs)
                 return result
-        except BaseException:
+        except BaseException as error:
             exception_count = 1
+            failure = error
             raise
         finally:
-            wrapper.last_profile = BehaviorProfile(
-                function=f"{function.__module__}.{function.__qualname__}",
-                duration_ns=time.perf_counter_ns() - started,
-                exceptions=exception_count,
-                call_graph=graph,
-                metrics=metrics,
-            )
-            current_profile.set(wrapper.last_profile)
-            if consume_warmup():
-                wrapper.last_comparison = ComparisonResult(
-                    function=wrapper.last_profile.function,
-                    metrics=[],
-                    status="warmup",
+            try:
+                wrapper.last_profile = BehaviorProfile(
+                    function=f"{function.__module__}.{function.__qualname__}",
+                    duration_ns=time.perf_counter_ns() - started,
+                    exceptions=exception_count,
+                    call_graph=graph,
+                    metrics=metrics,
                 )
-            else:
-                wrapper.last_comparison = compare(
-                    wrapper.last_profile, store.load(wrapper.last_profile.function)
-                )
-            current_comparison.set(wrapper.last_comparison)
-            if wrapper.last_comparison.status != "warmup":
-                store.append(wrapper.last_profile)
-                history.record(wrapper.last_profile)
+                current_profile.set(wrapper.last_profile)
+                if consume_warmup():
+                    wrapper.last_comparison = ComparisonResult(
+                        function=wrapper.last_profile.function,
+                        metrics=[],
+                        status="warmup",
+                    )
+                else:
+                    wrapper.last_comparison = compare(
+                        wrapper.last_profile, store.load(wrapper.last_profile.function)
+                    )
+                current_comparison.set(wrapper.last_comparison)
+                if wrapper.last_comparison.status != "warmup":
+                    store.append(wrapper.last_profile)
+                    history.record(wrapper.last_profile)
+            except BaseException:
+                if failure is None:
+                    raise
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]
@@ -151,38 +157,44 @@ def _track_async(
     async def wrapper(*args: Any, **kwargs: Any) -> T:
         started = time.perf_counter_ns()
         exception_count = 0
+        failure: Optional[BaseException] = None
         graph = {}
         metrics = {}
         try:
             with active_collectors(config, metrics):
                 result, graph = await collect_async_call_graph(function, *args, **kwargs)
                 return result
-        except BaseException:
+        except BaseException as error:
             exception_count = 1
+            failure = error
             raise
         finally:
-            wrapper.last_profile = BehaviorProfile(
-                function=f"{function.__module__}.{function.__qualname__}",
-                duration_ns=time.perf_counter_ns() - started,
-                exceptions=exception_count,
-                call_graph=graph,
-                metrics=metrics,
-            )
-            current_profile.set(wrapper.last_profile)
-            if consume_warmup():
-                wrapper.last_comparison = ComparisonResult(
-                    function=wrapper.last_profile.function,
-                    metrics=[],
-                    status="warmup",
+            try:
+                wrapper.last_profile = BehaviorProfile(
+                    function=f"{function.__module__}.{function.__qualname__}",
+                    duration_ns=time.perf_counter_ns() - started,
+                    exceptions=exception_count,
+                    call_graph=graph,
+                    metrics=metrics,
                 )
-            else:
-                wrapper.last_comparison = compare(
-                    wrapper.last_profile, store.load(wrapper.last_profile.function)
-                )
-            current_comparison.set(wrapper.last_comparison)
-            if wrapper.last_comparison.status != "warmup":
-                store.append(wrapper.last_profile)
-                history.record(wrapper.last_profile)
+                current_profile.set(wrapper.last_profile)
+                if consume_warmup():
+                    wrapper.last_comparison = ComparisonResult(
+                        function=wrapper.last_profile.function,
+                        metrics=[],
+                        status="warmup",
+                    )
+                else:
+                    wrapper.last_comparison = compare(
+                        wrapper.last_profile, store.load(wrapper.last_profile.function)
+                    )
+                current_comparison.set(wrapper.last_comparison)
+                if wrapper.last_comparison.status != "warmup":
+                    store.append(wrapper.last_profile)
+                    history.record(wrapper.last_profile)
+            except BaseException:
+                if failure is None:
+                    raise
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]

@@ -17,6 +17,7 @@ class HTTPCollector:
     def __init__(self) -> None:
         self._requests: Optional[Any] = None
         self._original: Optional[Callable[..., Any]] = None
+        self._wrapped: Optional[Callable[..., Any]] = None
         self._count = 0
         self._lock = Lock()
 
@@ -41,12 +42,19 @@ class HTTPCollector:
         requests.sessions.Session.request = counted_request
         self._requests = requests
         self._original = original
+        self._wrapped = counted_request
 
     def detach(self) -> None:
-        if self._requests is not None and self._original is not None:
+        if (
+            self._requests is not None
+            and self._original is not None
+            and self._wrapped is not None
+            and self._requests.sessions.Session.request is self._wrapped
+        ):
             self._requests.sessions.Session.request = self._original
         self._requests = None
         self._original = None
+        self._wrapped = None
 
     @property
     def request_count(self) -> int:

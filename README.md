@@ -111,8 +111,8 @@ silently treating the missing baseline as a pass.
   a debugger, or another profiler must remain active.
 - HTTP and Redis collectors temporarily replace process-global library hooks.
   They restore the hook that was present when attached, are thread-safe for
-  counting calls, and should not be attached concurrently by multiple
-  tracked executions.
+  counting calls, and leave a newer hook installed by another tool untouched.
+  They should not be attached concurrently by multiple tracked executions.
 - Profiles describe observed executions, not all possible behavior.
 - The CI artifact workflow is validated on trusted `master` runs; a real
   pull-request event is still required to exercise GitHub's fork permissions

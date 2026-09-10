@@ -53,6 +53,22 @@ def test_requests_collector_restores_existing_hook(monkeypatch) -> None:
     monkeypatch.setattr(requests.sessions.Session, "request", original)
 
 
+def test_requests_collector_does_not_clobber_later_hook(monkeypatch) -> None:
+    requests = pytest.importorskip("requests")
+    original = requests.sessions.Session.request
+    collector = HTTPCollector()
+    collector.attach()
+
+    def later_hook(self, method, url, *args, **kwargs):
+        return requests.Response()
+
+    monkeypatch.setattr(requests.sessions.Session, "request", later_hook)
+    collector.detach()
+
+    assert requests.sessions.Session.request is later_hook
+    monkeypatch.setattr(requests.sessions.Session, "request", original)
+
+
 def test_requests_collector_counts_concurrent_calls(monkeypatch) -> None:
     requests = pytest.importorskip("requests")
     response = requests.Response()
@@ -101,6 +117,22 @@ def test_redis_collector_restores_existing_hook(monkeypatch) -> None:
     collector.detach()
 
     assert redis.Redis.execute_command is existing_hook
+    monkeypatch.setattr(redis.Redis, "execute_command", original)
+
+
+def test_redis_collector_does_not_clobber_later_hook(monkeypatch) -> None:
+    redis = pytest.importorskip("redis")
+    original = redis.Redis.execute_command
+    collector = RedisCollector()
+    collector.attach()
+
+    def later_hook(self, *args, **kwargs):
+        return "PONG"
+
+    monkeypatch.setattr(redis.Redis, "execute_command", later_hook)
+    collector.detach()
+
+    assert redis.Redis.execute_command is later_hook
     monkeypatch.setattr(redis.Redis, "execute_command", original)
 
 

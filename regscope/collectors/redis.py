@@ -17,6 +17,7 @@ class RedisCollector:
     def __init__(self) -> None:
         self._redis: Optional[Any] = None
         self._original: Optional[Callable[..., Any]] = None
+        self._wrapped: Optional[Callable[..., Any]] = None
         self._count = 0
         self._lock = Lock()
 
@@ -41,12 +42,19 @@ class RedisCollector:
         redis.Redis.execute_command = counted_command
         self._redis = redis
         self._original = original
+        self._wrapped = counted_command
 
     def detach(self) -> None:
-        if self._redis is not None and self._original is not None:
+        if (
+            self._redis is not None
+            and self._original is not None
+            and self._wrapped is not None
+            and self._redis.Redis.execute_command is self._wrapped
+        ):
             self._redis.Redis.execute_command = self._original
         self._redis = None
         self._original = None
+        self._wrapped = None
 
     @property
     def command_count(self) -> int:

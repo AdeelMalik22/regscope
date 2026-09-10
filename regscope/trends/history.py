@@ -10,7 +10,7 @@ from pathlib import Path
 from statistics import median
 from typing import List, Optional, Union
 
-from ..models import BehaviorProfile
+from ..models import BehaviorProfile, SCHEMA_VERSION
 
 
 @dataclass(frozen=True)
@@ -44,6 +44,8 @@ class TrendPoint:
     def from_json(cls, value: str) -> "TrendPoint":
         data = json.loads(value)
         data.setdefault("schema_version", 1)
+        if data["schema_version"] > SCHEMA_VERSION:
+            raise ValueError(f"unsupported history schema version {data['schema_version']}")
         return cls(**data)
 
 

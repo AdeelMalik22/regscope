@@ -11,6 +11,13 @@ from typing import Any, Dict, List, Mapping
 SCHEMA_VERSION = 1
 
 
+def _validate_schema(version: int) -> None:
+    if version > SCHEMA_VERSION:
+        raise ValueError(
+            f"unsupported schema version {version}; maximum supported is {SCHEMA_VERSION}"
+        )
+
+
 def _canonical_json(value: Mapping[str, Any]) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
@@ -43,6 +50,8 @@ class BehaviorProfile:
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "BehaviorProfile":
         """Build a profile from a decoded JSON object."""
+        schema_version = int(data.get("schema_version", SCHEMA_VERSION))
+        _validate_schema(schema_version)
         return cls(
             function=str(data["function"]),
             duration_ns=int(data["duration_ns"]),
@@ -51,7 +60,7 @@ class BehaviorProfile:
             call_graph={str(k): int(v) for k, v in data.get("call_graph", {}).items()},
             metrics={str(k): int(v) for k, v in data.get("metrics", {}).items()},
             metadata=dict(data.get("metadata", {})),
-            schema_version=int(data.get("schema_version", SCHEMA_VERSION)),
+            schema_version=schema_version,
         )
 
     @classmethod
@@ -89,11 +98,13 @@ class Baseline:
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Baseline":
+        schema_version = int(data.get("schema_version", SCHEMA_VERSION))
+        _validate_schema(schema_version)
         return cls(
             function=str(data["function"]),
             runs=[BehaviorProfile.from_dict(item) for item in data.get("runs", [])],
             max_runs=int(data.get("max_runs", 5)),
-            schema_version=int(data.get("schema_version", SCHEMA_VERSION)),
+            schema_version=schema_version,
         )
 
     @classmethod

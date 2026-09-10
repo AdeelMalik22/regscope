@@ -72,3 +72,28 @@ Install development dependencies and run the tests:
 ```
 
 The implementation roadmap is in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
+
+## Privacy and measurements
+
+Profiles contain aggregate timing, call, exception, collector, and memory
+metrics. RegScope does not capture function arguments, return values, SQL
+text, bound parameters, URLs, headers, request bodies, Redis keys, or Redis
+values. The SHA-256 fingerprint is derived from the structured profile and is
+not a substitute for the profile itself.
+
+The core call profiler adds measurable overhead, especially for functions with
+large call graphs. Run the local benchmark with:
+
+```bash
+.venv/bin/python -m benchmarks.overhead
+```
+
+Benchmark results depend on the machine and Python version. Use them to tune
+thresholds for a project rather than treating the sample output as universal.
+
+## Schema stability
+
+Structured profiles, baselines, and historical trend points currently use
+schema version `1`. Older records that omit a schema field are read as version
+1. Records from a newer unsupported schema are rejected explicitly so they
+cannot be silently misinterpreted.

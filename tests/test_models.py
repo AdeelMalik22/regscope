@@ -65,3 +65,11 @@ def test_baseline_json_round_trip() -> None:
 def test_baseline_rejects_zero_capacity() -> None:
     with pytest.raises(ValueError, match="at least 1"):
         Baseline(function="example.work", max_runs=0).add(profile())
+
+
+def test_profiles_reject_unknown_future_schema() -> None:
+    data = profile().to_dict()
+    data["schema_version"] = 999
+
+    with pytest.raises(ValueError, match="unsupported schema version"):
+        BehaviorProfile.from_dict(data)

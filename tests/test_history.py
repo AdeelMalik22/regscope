@@ -63,3 +63,12 @@ def test_history_migrates_records_without_schema_version(tmp_path: Path) -> None
     )
 
     assert store.load("example.work")[0].schema_version == 1
+
+
+def test_history_rejects_unknown_future_schema(tmp_path: Path) -> None:
+    store = HistoryStore(tmp_path)
+    path = store.path_for("example.work")
+    path.write_text('{"schema_version":999}\n', encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unsupported history schema"):
+        store.load("example.work")

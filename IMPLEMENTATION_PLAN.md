@@ -17,9 +17,13 @@ obsolete.
 - Preserve the zero-required-runtime-dependency promise.
 - Keep optional integrations lazy and isolated behind clear errors.
 
+Status is marked in each milestone heading. “Implemented” means the feature
+is present, tested, documented, committed, and pushed. “Outstanding” means it
+still requires implementation or a release decision.
+
 ## Phase 0 — Project foundation
 
-### Commit 1: package skeleton, packaging, and CI foundation
+### Commit 1: package skeleton, packaging, and CI foundation (implemented)
 
 - Lock the project name to **RegScope**: package/import path `regscope` and CLI
   command `regscope`.
@@ -31,7 +35,7 @@ obsolete.
   versions (3.9–3.12 initially).
 - Validate sdist and wheel build/install in CI before feature work begins.
 
-### Commit 2: documentation and repository hygiene
+### Commit 2: documentation and repository hygiene (implemented)
 
 - Add a README with the observed-behavior disclaimer, MVP scope, and quick
   start direction.
@@ -41,7 +45,7 @@ obsolete.
 
 ## Phase 1 — v0.1 tracking core
 
-### Commit 3: data model and deterministic serialization
+### Commit 3: data model and deterministic serialization (implemented)
 
 - Define dataclasses for a per-run behavior profile and stored baseline.
 - Include function identity, runtime, call count, exceptions, call graph data,
@@ -49,7 +53,7 @@ obsolete.
 - Implement canonical JSON serialization so equivalent records hash alike.
 - Add unit tests for round trips, schema versioning, and stable ordering.
 
-### Commit 4: timing, exception, and call-count collection
+### Commit 4: timing, exception, and call-count collection (implemented)
 
 - Implement synchronous tracking using `time.perf_counter()`.
 - Capture successful and exceptional runs without hiding the original
@@ -64,7 +68,7 @@ obsolete.
 - Test nested calls, exceptions, recursion, profiler restoration, and running
   under an existing profiler/coverage session without corrupting its data.
 
-### Commit 5: call-graph representation
+### Commit 5: call-graph representation (implemented)
 
 - Finalize the v0.1 representation as a flat mapping of qualified function
   names to call counts, with the tracked function as the root.
@@ -73,7 +77,7 @@ obsolete.
   execution graph.
 - Add deterministic tests for graph output.
 
-### Commit 6: async decorator support
+### Commit 6: async decorator support (implemented)
 
 - Make the decorator detect coroutine functions with
   `inspect.iscoroutinefunction`.
@@ -81,7 +85,7 @@ obsolete.
 - Preserve metadata, return values, and exception behavior.
 - Add async tests without requiring third-party test dependencies in runtime.
 
-### Commit 7: `@track` public API and configuration
+### Commit 7: `@track` public API and configuration (implemented)
 
 - Expose `track` from the package root.
 - Support both `@track` and `@track(...)` in v0.1.
@@ -91,7 +95,7 @@ obsolete.
 
 ## Phase 2 — baseline storage and comparison
 
-### Commit 8: JSON baseline storage
+### Commit 8: JSON baseline storage (implemented)
 
 - Store N runs per function, defaulting to five.
 - Use atomic file replacement to avoid corrupting baselines on interruption.
@@ -101,7 +105,7 @@ obsolete.
 - Use a lock or per-function files so parallel workers cannot overwrite one
   another; test concurrent writes and pytest-xdist-style isolation.
 
-### Commit 9: noise-aware comparison engine
+### Commit 9: noise-aware comparison engine (implemented)
 
 - Compare new observations against the previous run distribution rather than
   a single value.
@@ -111,7 +115,7 @@ obsolete.
 - Treat missing metrics and incompatible schemas as explicit outcomes.
 - Add tests for stable values, noisy values, outliers, and threshold boundaries.
 
-### Commit 10: derived fingerprint
+### Commit 10: derived fingerprint (implemented)
 
 - Generate a SHA-256 fingerprint from the canonical structured profile.
 - Use it only as a fast change-detection shortcut.
@@ -120,7 +124,7 @@ obsolete.
 
 ## Phase 3 — v0.2 SQLAlchemy collector
 
-### Commit 11: optional SQL query collector
+### Commit 11: optional SQL query collector (implemented)
 
 - Add a SQLAlchemy extra and lazy import path.
 - Count executed SQL statements through SQLAlchemy event hooks. Never capture
@@ -133,7 +137,7 @@ obsolete.
 
 ## Phase 4 — v0.3 CLI and v0.4 CI integration
 
-### Commit 12: argparse comparison CLI
+### Commit 12: argparse comparison CLI (implemented)
 
 - Add `regscope compare` using only `argparse` and the core comparison engine.
 - Render the documented human-readable regression report.
@@ -188,14 +192,29 @@ obsolete.
 
 ## Phase 5 — later collectors and v1.0 stabilization
 
-Implement one integration at a time, with its own commit sequence and
-absent-dependency tests:
+### Completed v0.5–v0.7 work
 
-1. HTTP request counting (`requests`/`httpx`), v0.5.
-2. Redis call counting, v0.6.
-3. Memory tracking with `tracemalloc`, v0.7.
-4. Stable baseline format, documented threshold tuning, and historical trend
-   views for v1.0.
+- HTTP request counting through the optional `requests` integration, including
+  restoration and concurrent-counting tests.
+- Redis command counting through the optional `redis` integration, including
+  restoration and concurrent-counting tests.
+- Memory tracking with `tracemalloc`.
+- `@track` integration for SQLAlchemy, HTTP, Redis, and memory metrics.
+- Historical trend recording, retention, migration handling, and human- and
+  machine-readable trend reporting.
+
+### Outstanding v1.0 work
+
+1. Freeze and publish the v1 public Python API, including configuration
+   compatibility guarantees and deprecation policy.
+2. Freeze the schema version 1 field contract and add migration fixtures for
+   every supported persisted record type.
+3. Complete release-level dependency integration coverage on the supported
+   Python matrix, including real dependency-present SQLAlchemy coverage.
+4. Validate the CI artifact workflow with a pull request originating from a
+   separate fork, subject to GitHub repository permissions.
+5. Finalize release metadata, changelog entries, package version, and the
+   `v1.0.0` release checklist.
 
 ## Definition of done for each milestone
 

@@ -24,12 +24,22 @@ def collect_call_graph(
     """
     counts: Counter[str] = Counter()
     previous = sys.getprofile()
+    local_callbacks: Dict[int, ProfileFunction] = {}
 
     def profiler(frame: FrameType, event: str, arg: Any) -> None:
         if previous is not None:
-            previous(frame, event, arg)
+            if event == "call":
+                callback = previous(frame, event, arg)
+                if callback is not None:
+                    local_callbacks[id(frame)] = callback
+            else:
+                callback = local_callbacks.get(id(frame))
+                if callback is not None:
+                    callback(frame, event, arg)
         if event == "call":
             counts[_frame_name(frame)] += 1
+        elif event == "return":
+            local_callbacks.pop(id(frame), None)
 
     sys.setprofile(profiler)
     try:
@@ -49,12 +59,22 @@ async def collect_async_call_graph(
 
     counts: Counter[str] = Counter()
     previous = sys.getprofile()
+    local_callbacks: Dict[int, ProfileFunction] = {}
 
     def profiler(frame: FrameType, event: str, arg: Any) -> None:
         if previous is not None:
-            previous(frame, event, arg)
+            if event == "call":
+                callback = previous(frame, event, arg)
+                if callback is not None:
+                    local_callbacks[id(frame)] = callback
+            else:
+                callback = local_callbacks.get(id(frame))
+                if callback is not None:
+                    callback(frame, event, arg)
         if event == "call":
             counts[_frame_name(frame)] += 1
+        elif event == "return":
+            local_callbacks.pop(id(frame), None)
 
     sys.setprofile(profiler)
     try:

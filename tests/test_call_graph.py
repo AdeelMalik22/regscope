@@ -43,3 +43,26 @@ def test_collect_call_graph_restores_profiler_after_exception() -> None:
         assert sys.getprofile() is existing_profiler
     finally:
         sys.setprofile(None)
+
+
+def test_collect_call_graph_preserves_existing_local_callbacks() -> None:
+    local_events = []
+
+    def local_profiler(frame, event, arg):
+        local_events.append(event)
+
+    def existing_profiler(frame, event, arg):
+        if event == "call":
+            return local_profiler
+        return None
+
+    def work() -> None:
+        return None
+
+    sys.setprofile(existing_profiler)
+    try:
+        collect_call_graph(work)
+    finally:
+        sys.setprofile(None)
+
+    assert "return" in local_events

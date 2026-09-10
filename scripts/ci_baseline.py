@@ -38,7 +38,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     return run(
         args.directory,
-        repeats=5 if args.command == "generate" else 1,
+        repeats=20 if args.command == "generate" else 1,
         enforce=args.command == "check",
     )
 

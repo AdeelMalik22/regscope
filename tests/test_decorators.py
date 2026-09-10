@@ -49,3 +49,13 @@ def test_track_config_controls_baseline_retention(tmp_path) -> None:
 def test_track_config_rejects_invalid_retention(tmp_path) -> None:
     with pytest.raises(ValueError, match="at least 1"):
         track(baseline_dir=tmp_path, max_runs=0)
+
+
+def test_track_can_collect_memory_metrics(tmp_path) -> None:
+    @track(baseline_dir=tmp_path, collect_memory=True)
+    def allocate() -> int:
+        return len([object() for _ in range(100)])
+
+    assert allocate() == 100
+    assert allocate.last_profile.metrics["memory_peak"] > 0
+    assert "memory_current_delta" in allocate.last_profile.metrics

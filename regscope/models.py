@@ -24,6 +24,7 @@ class BehaviorProfile:
     call_count: int = 0
     exceptions: int = 0
     call_graph: Dict[str, int] = field(default_factory=dict)
+    metrics: Dict[str, int] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
     schema_version: int = SCHEMA_VERSION
 
@@ -48,6 +49,7 @@ class BehaviorProfile:
             call_count=int(data.get("call_count", 0)),
             exceptions=int(data.get("exceptions", 0)),
             call_graph={str(k): int(v) for k, v in data.get("call_graph", {}).items()},
+            metrics={str(k): int(v) for k, v in data.get("metrics", {}).items()},
             metadata=dict(data.get("metadata", {})),
             schema_version=int(data.get("schema_version", SCHEMA_VERSION)),
         )

@@ -13,6 +13,7 @@ from ..core.comparison import compare
 from ..models import BehaviorProfile
 from ..storage import BaselineStore
 from .config import TrackConfig
+from .collectors import active_collectors
 
 
 T = TypeVar("T")
@@ -24,14 +25,29 @@ def track(
     *,
     baseline_dir: Union[PathLike[str], str] = ".regscope",
     max_runs: int = 5,
+    sqlalchemy_engine: Any = None,
+    collect_http: bool = False,
+    collect_redis: bool = False,
+    collect_memory: bool = False,
 ) -> Any:
     """Decorate a function with runtime collection and baseline persistence."""
-    config = TrackConfig(baseline_dir=baseline_dir, max_runs=max_runs)
+    config = TrackConfig(
+        baseline_dir=baseline_dir,
+        max_runs=max_runs,
+        sqlalchemy_engine=sqlalchemy_engine,
+        collect_http=collect_http,
+        collect_redis=collect_redis,
+        collect_memory=collect_memory,
+    )
     if function is None:
         return lambda wrapped: track(
             wrapped,
             baseline_dir=config.baseline_dir,
             max_runs=config.max_runs,
+            sqlalchemy_engine=config.sqlalchemy_engine,
+            collect_http=config.collect_http,
+            collect_redis=config.collect_redis,
+            collect_memory=config.collect_memory,
         )
 
     if iscoroutinefunction(function):
@@ -44,9 +60,11 @@ def track(
         started = time.perf_counter_ns()
         exception_count = 0
         graph = {}
+        metrics = {}
         try:
-            result, graph = collect_call_graph(function, *args, **kwargs)
-            return result
+            with active_collectors(config, metrics):
+                result, graph = collect_call_graph(function, *args, **kwargs)
+                return result
         except BaseException:
             exception_count = 1
             raise
@@ -56,6 +74,7 @@ def track(
                 duration_ns=time.perf_counter_ns() - started,
                 exceptions=exception_count,
                 call_graph=graph,
+                metrics=metrics,
             )
             wrapper.last_comparison = compare(
                 wrapper.last_profile, store.load(wrapper.last_profile.function)
@@ -77,9 +96,11 @@ def _track_async(
         started = time.perf_counter_ns()
         exception_count = 0
         graph = {}
+        metrics = {}
         try:
-            result, graph = await collect_async_call_graph(function, *args, **kwargs)
-            return result
+            with active_collectors(config, metrics):
+                result, graph = await collect_async_call_graph(function, *args, **kwargs)
+                return result
         except BaseException:
             exception_count = 1
             raise
@@ -89,6 +110,7 @@ def _track_async(
                 duration_ns=time.perf_counter_ns() - started,
                 exceptions=exception_count,
                 call_graph=graph,
+                metrics=metrics,
             )
             wrapper.last_comparison = compare(
                 wrapper.last_profile, store.load(wrapper.last_profile.function)

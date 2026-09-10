@@ -33,6 +33,7 @@ classifiers = [
 [project.optional-dependencies]
 dev = ["build", "pytest"]
 db = ["SQLAlchemy>=1.4"]
+http = ["requests>=2.28"]
 
 [tool.setuptools.packages.find]
 include = ["regscope*"]

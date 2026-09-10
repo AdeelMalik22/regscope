@@ -74,6 +74,7 @@ jobs:
           name: regscope-baseline-master
           path: .regscope/
           retention-days: 30
+          include-hidden-files: true
 
   download-baseline:
     needs: tests

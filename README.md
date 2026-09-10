@@ -112,7 +112,8 @@ silently treating the missing baseline as a pass.
 - HTTP and Redis collectors temporarily replace process-global library hooks.
   They restore the hook that was present when attached, are thread-safe for
   counting calls, and leave a newer hook installed by another tool untouched.
-  They should not be attached concurrently by multiple tracked executions.
+  Only one RegScope collector may own each library hook at a time; a
+  conflicting attachment fails clearly instead of stacking wrappers.
 - Profiles describe observed executions, not all possible behavior.
 - The CI artifact workflow is validated on trusted `master` runs; a real
   pull-request event is still required to exercise GitHub's fork permissions

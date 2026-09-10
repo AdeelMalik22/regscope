@@ -69,6 +69,20 @@ def test_requests_collector_does_not_clobber_later_hook(monkeypatch) -> None:
     monkeypatch.setattr(requests.sessions.Session, "request", original)
 
 
+def test_requests_collector_rejects_overlapping_ownership(monkeypatch) -> None:
+    requests = pytest.importorskip("requests")
+    original = requests.sessions.Session.request
+    first = HTTPCollector()
+    second = HTTPCollector()
+    first.attach()
+    try:
+        with pytest.raises(RuntimeError, match="another HTTP collector"):
+            second.attach()
+    finally:
+        first.detach()
+        monkeypatch.setattr(requests.sessions.Session, "request", original)
+
+
 def test_requests_collector_counts_concurrent_calls(monkeypatch) -> None:
     requests = pytest.importorskip("requests")
     response = requests.Response()
@@ -134,6 +148,20 @@ def test_redis_collector_does_not_clobber_later_hook(monkeypatch) -> None:
 
     assert redis.Redis.execute_command is later_hook
     monkeypatch.setattr(redis.Redis, "execute_command", original)
+
+
+def test_redis_collector_rejects_overlapping_ownership(monkeypatch) -> None:
+    redis = pytest.importorskip("redis")
+    original = redis.Redis.execute_command
+    first = RedisCollector()
+    second = RedisCollector()
+    first.attach()
+    try:
+        with pytest.raises(RuntimeError, match="another Redis collector"):
+            second.attach()
+    finally:
+        first.detach()
+        monkeypatch.setattr(redis.Redis, "execute_command", original)
 
 
 def test_redis_collector_counts_concurrent_calls(monkeypatch) -> None:

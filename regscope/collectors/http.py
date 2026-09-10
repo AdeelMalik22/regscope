@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import wraps
 from threading import Lock
-from typing import Any, Callable, Optional
+from typing import Any, Callable, ClassVar, Optional
 
 
 class HTTPCollector:
@@ -13,6 +13,9 @@ class HTTPCollector:
     The requests hook is process-global while attached. Do not attach multiple
     HTTP collectors concurrently; use one collector per tracked execution.
     """
+
+    _active_owner: ClassVar[Optional["HTTPCollector"]] = None
+    _ownership_lock: ClassVar[Lock] = Lock()
 
     def __init__(self) -> None:
         self._requests: Optional[Any] = None
@@ -28,21 +31,25 @@ class HTTPCollector:
             raise RuntimeError(
                 "HTTP tracking requires the 'http' extra: install regscope[http]"
             ) from error
-        if self._original is not None:
-            raise RuntimeError("collector is already attached")
+        with self._ownership_lock:
+            if self._original is not None:
+                raise RuntimeError("collector is already attached")
+            if type(self)._active_owner is not None:
+                raise RuntimeError("another HTTP collector is already attached")
 
-        original = requests.sessions.Session.request
+            original = requests.sessions.Session.request
 
-        @wraps(original)
-        def counted_request(session: Any, method: str, url: str, *args: Any, **kwargs: Any) -> Any:
-            with self._lock:
-                self._count += 1
-            return original(session, method, url, *args, **kwargs)
+            @wraps(original)
+            def counted_request(session: Any, *args: Any, **kwargs: Any) -> Any:
+                with self._lock:
+                    self._count += 1
+                return original(session, *args, **kwargs)
 
-        requests.sessions.Session.request = counted_request
-        self._requests = requests
-        self._original = original
-        self._wrapped = counted_request
+            requests.sessions.Session.request = counted_request
+            self._requests = requests
+            self._original = original
+            self._wrapped = counted_request
+            type(self)._active_owner = self
 
     def detach(self) -> None:
         if (
@@ -52,6 +59,9 @@ class HTTPCollector:
             and self._requests.sessions.Session.request is self._wrapped
         ):
             self._requests.sessions.Session.request = self._original
+        with self._ownership_lock:
+            if type(self)._active_owner is self:
+                type(self)._active_owner = None
         self._requests = None
         self._original = None
         self._wrapped = None

@@ -74,6 +74,7 @@ Install development dependencies and run the tests:
 The implementation roadmap is in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 Release history is in [CHANGELOG.md](CHANGELOG.md), with the release policy in
 [VERSIONING.md](VERSIONING.md).
+Performance and threshold guidance is in [docs/performance.md](docs/performance.md).
 
 ## Privacy and measurements
 

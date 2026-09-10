@@ -15,6 +15,9 @@ from typing import Callable, List, Tuple
 from regscope.collectors.call_graph import collect_call_graph
 
 
+RECOMMENDED_THRESHOLD = 0.20
+
+
 def recursive_workload(depth: int) -> int:
     if depth <= 0:
         return 1
@@ -46,6 +49,7 @@ def main() -> None:
     print(f"baseline_median_seconds={baseline:.9f}")
     print(f"instrumented_median_seconds={instrumented:.9f}")
     print(f"overhead_percent={overhead:.2f}")
+    print(f"recommended_regression_threshold={RECOMMENDED_THRESHOLD:.0%}")
 
 
 if __name__ == "__main__":

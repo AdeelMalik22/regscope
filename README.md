@@ -86,11 +86,12 @@ silently treating the missing baseline as a pass.
 
 ## Limitations
 
-- `sys.setprofile()` has one active profiler for the current interpreter
-  context. RegScope restores the profiler observed at entry, but does not
-  coordinate concurrent or nested profiler owners. Run tracked profiling in
-  an isolated test context when coverage, a debugger, or another profiler
-  must remain active.
+- `sys.setprofile()` has one active profiler per current thread. RegScope
+  restores the profiler observed at entry, and independent threads have
+  independent collection contexts. RegScope does not arbitrate nested owners
+  in one thread or an external profiler that replaces its hook during an
+  execution. Run tracked profiling in an isolated test context when coverage,
+  a debugger, or another profiler must remain active.
 - HTTP and Redis collectors temporarily replace process-global library hooks.
   They restore the hook that was present when attached, are thread-safe for
   counting calls, and should not be attached concurrently by multiple

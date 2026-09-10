@@ -41,9 +41,11 @@ workload size.
 
 ## Profiler ownership
 
-Call-graph collection temporarily installs a `sys.setprofile()` callback and
-restores the callback that was active before collection. RegScope deliberately
-does not attempt to arbitrate ownership between simultaneous or nested
-profilers: coverage tools, debuggers, pytest plugins, and application code may
-also depend on this hook. Keep call-graph collection isolated when another
-tool must own the profiler for the same execution.
+Call-graph collection temporarily installs a `sys.setprofile()` callback for
+the current thread and restores the callback that was active before
+collection. Independent threads can collect independently. RegScope
+deliberately does not arbitrate nested profiler owners in one thread or an
+external profiler that replaces its hook during execution: coverage tools,
+debuggers, pytest plugins, and application code may also depend on this hook.
+Keep call-graph collection isolated when another tool must own the profiler
+for the same execution.

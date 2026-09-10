@@ -56,8 +56,11 @@ obsolete.
   exception or changing the wrapped function's return value.
 - Add call tracking with `sys.setprofile()` and restore any prior profiler in
   a `finally` block.
-- Define the v0.1 limitation: profiling is process-global and concurrent
-  tracking/profiler ownership is unsupported; document the limitation.
+- Define the v0.1 limitation: `sys.setprofile()` ownership is not coordinated
+  across concurrent or nested profiler users. Preserve and restore the
+  profiler observed at entry; do not add unsafe profiler chaining. Document
+  the limitation and test restoration under an existing profiler/coverage
+  session.
 - Test nested calls, exceptions, recursion, profiler restoration, and running
   under an existing profiler/coverage session without corrupting its data.
 

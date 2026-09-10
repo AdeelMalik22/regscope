@@ -38,3 +38,12 @@ RegScope configuration.
 The benchmark is a noise-floor diagnostic, not a pass/fail performance test.
 Its output should be considered alongside CI variance, Python version, and
 workload size.
+
+## Profiler ownership
+
+Call-graph collection temporarily installs a `sys.setprofile()` callback and
+restores the callback that was active before collection. RegScope deliberately
+does not attempt to arbitrate ownership between simultaneous or nested
+profilers: coverage tools, debuggers, pytest plugins, and application code may
+also depend on this hook. Keep call-graph collection isolated when another
+tool must own the profiler for the same execution.

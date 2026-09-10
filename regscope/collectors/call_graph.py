@@ -45,7 +45,8 @@ def collect_call_graph(
     try:
         result = function(*args, **kwargs)
     finally:
-        sys.setprofile(previous)
+        if sys.getprofile() is profiler:
+            sys.setprofile(previous)
 
     return result, dict(sorted(counts.items()))
 
@@ -80,7 +81,8 @@ async def collect_async_call_graph(
     try:
         result = await function(*args, **kwargs)
     finally:
-        sys.setprofile(previous)
+        if sys.getprofile() is profiler:
+            sys.setprofile(previous)
 
     return result, dict(sorted(counts.items()))
 

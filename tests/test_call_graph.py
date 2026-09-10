@@ -107,3 +107,21 @@ def test_collection_is_independent_between_threads() -> None:
     assert not any(name.endswith(".right") for name in left_graph)
     assert any(name.endswith(".right") for name in right_graph)
     assert not any(name.endswith(".left") for name in right_graph)
+
+
+def test_collection_does_not_clobber_profiler_installed_during_execution() -> None:
+    external_events = []
+
+    def external_profiler(frame, event, arg):
+        external_events.append(event)
+
+    def install_external_profiler() -> None:
+        sys.setprofile(external_profiler)
+
+    collect_call_graph(install_external_profiler)
+
+    try:
+        assert sys.getprofile() is external_profiler
+        assert external_events
+    finally:
+        sys.setprofile(None)

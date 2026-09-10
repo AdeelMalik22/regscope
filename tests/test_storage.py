@@ -6,6 +6,7 @@ import pytest
 
 from regscope.models import BehaviorProfile
 from regscope.storage import BaselineStore
+from regscope.errors import MalformedRecordError
 
 
 def make_profile(function: str = "example.work", duration_ns: int = 1) -> BehaviorProfile:
@@ -53,6 +54,16 @@ def test_store_uses_atomic_json_file(tmp_path: Path) -> None:
 def test_store_rejects_invalid_capacity(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="at least 1"):
         BaselineStore(tmp_path, max_runs=0)
+
+
+def test_store_reports_malformed_json(tmp_path: Path) -> None:
+    store = BaselineStore(tmp_path)
+    path = store.path_for("example.work")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("not-json", encoding="utf-8")
+
+    with pytest.raises(MalformedRecordError, match="invalid baseline record"):
+        store.load("example.work")
 
 
 def test_store_serializes_concurrent_appends(tmp_path: Path) -> None:

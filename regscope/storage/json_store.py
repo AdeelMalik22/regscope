@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import ClassVar, Dict, Iterator, Optional
 
 from ..models import Baseline, BehaviorProfile
+from ..errors import MalformedRecordError
 
 
 class BaselineStore:
@@ -33,7 +34,12 @@ class BaselineStore:
         path = self.path_for(function)
         if not path.exists():
             return Baseline(function=function, max_runs=self.max_runs)
-        return Baseline.from_json(path.read_text(encoding="utf-8"))
+        try:
+            return Baseline.from_json(path.read_text(encoding="utf-8"))
+        except (OSError, TypeError, ValueError, KeyError) as error:
+            raise MalformedRecordError(
+                f"invalid baseline record at {path}: {error}"
+            ) from error
 
     def save(self, baseline: Baseline) -> Path:
         self.directory.mkdir(parents=True, exist_ok=True)

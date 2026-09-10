@@ -11,6 +11,7 @@ from statistics import median
 from typing import List, Optional, Union
 
 from ..models import BehaviorProfile, SCHEMA_VERSION
+from ..errors import MalformedRecordError
 
 
 @dataclass(frozen=True)
@@ -95,11 +96,16 @@ class HistoryStore:
         path = self.path_for(function)
         if not path.exists():
             return []
-        return [
-            TrendPoint.from_json(line)
-            for line in path.read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
+        try:
+            return [
+                TrendPoint.from_json(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+        except (OSError, TypeError, ValueError, KeyError) as error:
+            raise MalformedRecordError(
+                f"invalid history record at {path}: {error}"
+            ) from error
 
     def summarize(self, function: str) -> TrendSummary:
         points = self.load(function)

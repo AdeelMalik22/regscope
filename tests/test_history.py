@@ -4,6 +4,7 @@ import pytest
 
 from regscope.models import BehaviorProfile
 from regscope.trends import HistoryStore, TrendPoint
+from regscope.errors import MalformedRecordError
 
 
 def profile(duration: int, exceptions: int = 0) -> BehaviorProfile:
@@ -76,4 +77,13 @@ def test_history_rejects_unknown_future_schema(tmp_path: Path) -> None:
     path.write_text('{"schema_version":999}\n', encoding="utf-8")
 
     with pytest.raises(ValueError, match="unsupported history schema"):
+        store.load("example.work")
+
+
+def test_history_reports_malformed_json(tmp_path: Path) -> None:
+    store = HistoryStore(tmp_path)
+    path = store.path_for("example.work")
+    path.write_text("not-json\n", encoding="utf-8")
+
+    with pytest.raises(MalformedRecordError, match="invalid history record"):
         store.load("example.work")

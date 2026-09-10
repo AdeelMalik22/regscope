@@ -24,3 +24,49 @@ jobs:
         run: python -m build
       - name: Validate wheel installation
         run: python -m pip install --force-reinstall dist/*.whl
+
+  publish-baseline:
+    needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package
+        run: python -m pip install ".[dev]"
+      - name: Generate trusted baseline
+        run: |
+          mkdir -p .regscope
+          python -m pytest --regscope-baseline-dir .regscope
+      - name: Upload trusted baseline
+        if: hashFiles('.regscope/**/*.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: regscope-baseline-master
+          path: .regscope/
+          retention-days: 30
+
+  download-baseline:
+    needs: tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download latest trusted master baseline
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: ci.yml
+          workflow_conclusion: success
+          branch: master
+          name: regscope-baseline-master
+          path: .regscope
+      - name: Report baseline availability
+        run: |
+          if compgen -G '.regscope/**/*.json' > /dev/null; then
+            echo "Trusted RegScope baseline downloaded."
+          else
+            echo "No trusted baseline artifact is available yet."
+          fi

@@ -12,10 +12,6 @@ license = "MIT"
 authors = [{ name = "RegScope contributors" }]
 dependencies = []
 keywords = ["profiling", "regression-testing", "performance", "observability"]
-[project.urls]
-Homepage = "https://github.com/AdeelMalik22/regscope"
-Repository = "https://github.com/AdeelMalik22/regscope"
-Issues = "https://github.com/AdeelMalik22/regscope/issues"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -27,6 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Testing",
 ]
+
+[project.urls]
+Homepage = "https://github.com/AdeelMalik22/regscope"
+Repository = "https://github.com/AdeelMalik22/regscope"
+Issues = "https://github.com/AdeelMalik22/regscope/issues"
 
 [project.scripts]
 regscope = "regscope.cli:main"

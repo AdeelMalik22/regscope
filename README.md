@@ -54,13 +54,44 @@ directory. The default directory is `.regscope`. Profiles contain structured
 metrics and call counts; they do not capture function arguments or sensitive
 external data.
 
+## CI regression checks
+
+The repository workflow keeps trusted baselines outside Git. A push to
+`master` runs `tests/ci_targets`, records the baseline in `.regscope`, and
+uploads it as the `regscope-baseline-master` artifact. Pull-request jobs
+download the latest successful artifact from `master` and compare the same
+targets against it. A comparison that exceeds the configured threshold fails
+the job.
+
+Baseline artifacts are retained for 30 days. The workflow includes hidden
+files when uploading because `.regscope` is a dot-directory. The baseline
+publisher is restricted to trusted `master` pushes; pull requests cannot
+replace the trusted artifact, including pull requests from forks.
+
+To reproduce the comparison locally, first generate a trusted baseline and
+then run the targets without the update flag:
+
+```bash
+REGSCOPE_CI_BASELINE=1 REGSCOPE_TRUSTED_BASELINE=1 \
+  .venv/bin/python -m pytest tests/ci_targets \
+  --regscope-baseline-dir .regscope --regscope-update-baseline
+
+REGSCOPE_CI_BASELINE=1 .venv/bin/python -m pytest tests/ci_targets \
+  --regscope-baseline-dir .regscope
+```
+
+If no artifact has been published yet, the pull-request job reports that the
+trusted baseline is unavailable and the comparison target fails rather than
+silently treating the missing baseline as a pass.
+
 ## Limitations
 
 - `sys.setprofile()` is process-global. RegScope restores an existing profiler,
   but concurrent profiler ownership is not yet supported.
 - Profiles describe observed executions, not all possible behavior.
-- Comparison reporting and CI baseline transport are still under development.
-- Database, HTTP, Redis, and memory collectors are planned for later versions.
+- The CI artifact workflow is validated on trusted `master` runs; a real
+  pull-request event is still required to exercise GitHub's fork permissions
+  and artifact-download path end to end.
 
 ## Development
 

@@ -14,6 +14,11 @@ def test_track_preserves_function_behavior_and_profile(tmp_path) -> None:
     assert add.last_profile.function.endswith("test_track_preserves_function_behavior_and_profile.<locals>.add")
     assert add.last_profile.exceptions == 0
     assert add.last_profile.call_graph
+    assert add.last_comparison.metrics == []
+
+    add(3, 4)
+    assert add.last_comparison.function == add.last_profile.function
+    assert add.last_comparison.metrics
 
 
 def test_track_records_exception_and_reraises_it(tmp_path) -> None:

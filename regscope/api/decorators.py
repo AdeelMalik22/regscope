@@ -9,6 +9,7 @@ from os import PathLike
 from typing import Any, Callable, Optional, TypeVar, Union, cast
 
 from ..collectors.call_graph import collect_async_call_graph, collect_call_graph
+from ..core.comparison import compare
 from ..models import BehaviorProfile
 from ..storage import BaselineStore
 from .config import TrackConfig
@@ -56,9 +57,13 @@ def track(
                 exceptions=exception_count,
                 call_graph=graph,
             )
+            wrapper.last_comparison = compare(
+                wrapper.last_profile, store.load(wrapper.last_profile.function)
+            )
             store.append(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
+    wrapper.last_comparison = None  # type: ignore[attr-defined]
     return cast(Function[T], wrapper)
 
 
@@ -85,7 +90,11 @@ def _track_async(
                 exceptions=exception_count,
                 call_graph=graph,
             )
+            wrapper.last_comparison = compare(
+                wrapper.last_profile, store.load(wrapper.last_profile.function)
+            )
             store.append(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
+    wrapper.last_comparison = None  # type: ignore[attr-defined]
     return cast(Function[T], wrapper)

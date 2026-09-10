@@ -15,6 +15,7 @@ def test_track_supports_async_functions(tmp_path) -> None:
     assert get_value.last_profile is not None
     assert get_value.last_profile.exceptions == 0
     assert get_value.last_profile.duration_ns >= 0
+    assert get_value.last_comparison.metrics == []
 
 
 def test_track_records_async_exception(tmp_path) -> None:

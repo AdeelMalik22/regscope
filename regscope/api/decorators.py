@@ -89,9 +89,21 @@ def track(
         graph = {}
         metrics = {}
         try:
-            with active_collectors(config, metrics):
-                result, graph = collect_call_graph(function, *args, **kwargs)
-                return result
+            try:
+                with active_collectors(config, metrics):
+                    try:
+                        result, graph = collect_call_graph(function, *args, **kwargs)
+                        return result
+                    except BaseException as error:
+                        failure = error
+                        raise
+            except BaseException as error:
+                if failure is None:
+                    failure = error
+                    raise
+                if failure is not None and error is not failure:
+                    raise failure from error
+                raise
         except BaseException as error:
             exception_count = 1
             failure = error
@@ -161,9 +173,21 @@ def _track_async(
         graph = {}
         metrics = {}
         try:
-            with active_collectors(config, metrics):
-                result, graph = await collect_async_call_graph(function, *args, **kwargs)
-                return result
+            try:
+                with active_collectors(config, metrics):
+                    try:
+                        result, graph = await collect_async_call_graph(function, *args, **kwargs)
+                        return result
+                    except BaseException as error:
+                        failure = error
+                        raise
+            except BaseException as error:
+                if failure is None:
+                    failure = error
+                    raise
+                if failure is not None and error is not failure:
+                    raise failure from error
+                raise
         except BaseException as error:
             exception_count = 1
             failure = error

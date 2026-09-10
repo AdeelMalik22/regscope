@@ -67,6 +67,32 @@ def test_track_surfaces_persistence_failure_after_success(tmp_path, monkeypatch)
         succeed()
 
 
+def test_track_preserves_application_exception_when_collector_cleanup_fails(
+    tmp_path, monkeypatch
+) -> None:
+    from regscope.api import decorators
+
+    class FailingCollectorContext:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            raise OSError("collector cleanup failed")
+
+    monkeypatch.setattr(
+        decorators, "active_collectors", lambda config, metrics: FailingCollectorContext()
+    )
+
+    @track(baseline_dir=tmp_path)
+    def fail() -> None:
+        raise ValueError("application failure")
+
+    with pytest.raises(ValueError, match="application failure") as raised:
+        fail()
+
+    assert isinstance(raised.value.__cause__, OSError)
+
+
 def test_track_config_controls_baseline_retention(tmp_path) -> None:
     @track(baseline_dir=tmp_path, max_runs=1)
     def add(value: int) -> int:

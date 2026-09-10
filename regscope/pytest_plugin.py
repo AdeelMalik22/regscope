@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable
+import os
 
 import pytest
 
@@ -27,6 +28,11 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=DEFAULT_THRESHOLD,
         help="allowed relative increase before a regression is reported",
     )
+    group.addoption(
+        "--regscope-update-baseline",
+        action="store_true",
+        help="update baselines only when REGSCOPE_TRUSTED_BASELINE=1",
+    )
 
 
 @pytest.fixture
@@ -43,3 +49,24 @@ def regscope_compare(request: pytest.FixtureRequest) -> Callable[[BehaviorProfil
         return result
 
     return compare_profile
+
+
+@pytest.fixture
+def regscope_record(request: pytest.FixtureRequest) -> Callable[[BehaviorProfile], ComparisonResult]:
+    """Compare a profile and optionally record it in a trusted update run."""
+    directory = Path(request.config.getoption("--regscope-baseline-dir"))
+    threshold = request.config.getoption("--regscope-threshold")
+    update_requested = request.config.getoption("--regscope-update-baseline")
+    trusted = os.environ.get("REGSCOPE_TRUSTED_BASELINE") == "1"
+    store = BaselineStore(directory)
+
+    def record_profile(profile: BehaviorProfile) -> ComparisonResult:
+        baseline = store.load(profile.function)
+        result = compare(profile, baseline, threshold=threshold)
+        if result.regression and not (update_requested and trusted):
+            pytest.fail(f"RegScope behavioral regression detected for {profile.function}")
+        if update_requested and trusted:
+            store.append(profile)
+        return result
+
+    return record_profile

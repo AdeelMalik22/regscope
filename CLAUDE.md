@@ -60,3 +60,15 @@ Every meaningful change is handled independently:
 
 Do not bundle unrelated fixes, infrastructure changes, or refactors into a
 feature commit. Keep the working tree changes that belong to the user intact.
+
+## Benchmarks
+
+Run the instrumentation overhead benchmark with:
+
+```bash
+.venv/bin/python -m benchmarks.overhead
+```
+
+It compares a recursive workload with and without call-graph collection and
+reports median runtime and overhead percentage. Results are environment-
+dependent and should be recorded before tuning regression thresholds.

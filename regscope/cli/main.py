@@ -27,6 +27,7 @@ def build_parser() -> argparse.ArgumentParser:
     trend_parser = subparsers.add_parser("trend", help="report historical behavior trends")
     trend_parser.add_argument("--directory", type=Path, default=Path(".regscope"))
     trend_parser.add_argument("--function", required=True)
+    trend_parser.add_argument("--json", action="store_true", dest="json_output")
     return parser
 
 
@@ -44,7 +45,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         }
         return _compare(args.baseline, args.current, args.threshold, thresholds, args.json_output)
     if args.command == "trend":
-        return report(args.directory, args.function)
+        return report(args.directory, args.function, args.json_output)
     return 2
 
 

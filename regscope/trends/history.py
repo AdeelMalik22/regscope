@@ -56,7 +56,12 @@ class TrendSummary:
     duration_min_ns: int
     duration_median_ns: int
     duration_max_ns: int
+    duration_first_ns: int
+    duration_latest_ns: int
+    duration_delta_ns: int
+    duration_change_ratio: float
     exception_samples: int
+    exception_rate: float
 
 
 class HistoryStore:
@@ -101,11 +106,26 @@ class HistoryStore:
         if not points:
             raise ValueError("no historical samples for function")
         durations = [point.duration_ns for point in points]
+        first_duration = durations[0]
+        latest_duration = durations[-1]
+        change_ratio = (
+            0.0
+            if first_duration == 0 and latest_duration == 0
+            else float("inf")
+            if first_duration == 0
+            else (latest_duration - first_duration) / first_duration
+        )
+        exception_samples = sum(point.exceptions for point in points)
         return TrendSummary(
             function=function,
             samples=len(points),
             duration_min_ns=min(durations),
             duration_median_ns=int(median(durations)),
             duration_max_ns=max(durations),
-            exception_samples=sum(point.exceptions for point in points),
+            duration_first_ns=first_duration,
+            duration_latest_ns=latest_duration,
+            duration_delta_ns=latest_duration - first_duration,
+            duration_change_ratio=change_ratio,
+            exception_samples=exception_samples,
+            exception_rate=exception_samples / len(points),
         )

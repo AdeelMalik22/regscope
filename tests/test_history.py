@@ -35,7 +35,12 @@ def test_history_summarizes_duration_trend(tmp_path: Path) -> None:
     assert summary.duration_min_ns == 100
     assert summary.duration_median_ns == 200
     assert summary.duration_max_ns == 300
+    assert summary.duration_first_ns == 100
+    assert summary.duration_latest_ns == 300
+    assert summary.duration_delta_ns == 200
+    assert summary.duration_change_ratio == 2
     assert summary.exception_samples == 1
+    assert summary.exception_rate == pytest.approx(1 / 3)
 
 
 def test_history_requires_samples_for_summary(tmp_path: Path) -> None:

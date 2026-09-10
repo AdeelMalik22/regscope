@@ -42,6 +42,20 @@ def test_cli_reports_trend(tmp_path, capsys) -> None:
     assert "RegScope Trend" in capsys.readouterr().out
 
 
+def test_cli_reports_trend_as_json(tmp_path, capsys) -> None:
+    from regscope.models import BehaviorProfile
+    from regscope.trends import HistoryStore
+
+    HistoryStore(tmp_path).record(
+        BehaviorProfile(function="example.work", duration_ns=100)
+    )
+
+    assert main([
+        "trend", "--directory", str(tmp_path), "--function", "example.work", "--json"
+    ]) == 0
+    assert '"duration_latest_ns": 100' in capsys.readouterr().out
+
+
 def test_cli_supports_machine_readable_output(tmp_path, capsys) -> None:
     baseline, current = write_profiles(tmp_path, 121)
 

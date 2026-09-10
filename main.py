@@ -117,7 +117,7 @@ def heavy_customer_report(connection: sqlite3.Connection) -> list[dict[str, Any]
 
 
 class DemoHandler(BaseHTTPRequestHandler):
-    connection: sqlite3.Connection
+    db_connection: sqlite3.Connection
 
     def send_json(self, payload: Any, status: int = 200) -> None:
         body = json.dumps(payload, indent=2).encode("utf-8")
@@ -133,7 +133,7 @@ class DemoHandler(BaseHTTPRequestHandler):
             self.send_json({"status": "ok"})
             return
         if self.path == "/report":
-            rows = heavy_customer_report(self.connection)
+            rows = heavy_customer_report(self.db_connection)
             profile = heavy_customer_report.get_current_profile()
             self.send_json(
                 {
@@ -151,7 +151,7 @@ class DemoHandler(BaseHTTPRequestHandler):
         self.send_json({"error": "try /health or /report"}, status=404)
 
     def log_message(self, format: str, *args: Any) -> None:
-        print(f"[{self.log_date_time_string}] {format % args}")
+        print(f"[{self.log_date_time_string()}] {format % args}")
 
 
 def main() -> None:
@@ -160,7 +160,7 @@ def main() -> None:
     class BoundDemoHandler(DemoHandler):
         pass
 
-    BoundDemoHandler.connection = connection
+    BoundDemoHandler.db_connection = connection
     server = ThreadingHTTPServer((HOST, PORT), BoundDemoHandler)
     print(f"RegScope SQLite demo listening at http://{HOST}:{PORT}")
     print("Try /health and /report; press Ctrl+C to stop.")

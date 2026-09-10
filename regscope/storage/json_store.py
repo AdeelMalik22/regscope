@@ -68,6 +68,10 @@ class BaselineStore:
             self.directory.mkdir(parents=True, exist_ok=True)
             lock_path = path.with_suffix(".lock")
             with lock_path.open("a+", encoding="utf-8") as lock_file:
+                lock_file.seek(0)
+                lock_file.write("0")
+                lock_file.flush()
+                lock_file.seek(0)
                 _lock_file(lock_file)
                 try:
                     yield
@@ -85,6 +89,11 @@ class BaselineStore:
 
 
 def _lock_file(handle: object) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        return
     try:
         import fcntl
     except ImportError:
@@ -93,6 +102,12 @@ def _lock_file(handle: object) -> None:
 
 
 def _unlock_file(handle: object) -> None:
+    if os.name == "nt":
+        import msvcrt
+
+        handle.seek(0)
+        msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        return
     try:
         import fcntl
     except ImportError:

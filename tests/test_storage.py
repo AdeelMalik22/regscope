@@ -1,5 +1,6 @@
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Process
 
 import pytest
 
@@ -9,6 +10,12 @@ from regscope.storage import BaselineStore
 
 def make_profile(function: str = "example.work", duration_ns: int = 1) -> BehaviorProfile:
     return BehaviorProfile(function=function, duration_ns=duration_ns)
+
+
+def append_values_in_process(directory: str, values) -> None:
+    child_store = BaselineStore(directory, max_runs=12)
+    for value in values:
+        child_store.append(make_profile(duration_ns=value))
 
 
 def test_store_loads_missing_function_as_empty_baseline(tmp_path: Path) -> None:
@@ -62,3 +69,19 @@ def test_store_serializes_concurrent_appends(tmp_path: Path) -> None:
     loaded = store.load("example.work")
     assert len(loaded.runs) == 20
     assert sorted(run.duration_ns for run in loaded.runs) == list(range(20))
+
+
+def test_store_serializes_cross_process_appends(tmp_path: Path) -> None:
+    store = BaselineStore(tmp_path, max_runs=12)
+
+    first = Process(target=append_values_in_process, args=(str(tmp_path), range(0, 6)))
+    second = Process(target=append_values_in_process, args=(str(tmp_path), range(6, 12)))
+    first.start()
+    second.start()
+    first.join()
+    second.join()
+
+    assert first.exitcode == 0
+    assert second.exitcode == 0
+    loaded = store.load("example.work")
+    assert sorted(run.duration_ns for run in loaded.runs) == list(range(12))

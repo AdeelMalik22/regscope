@@ -177,6 +177,15 @@ obsolete.
 - Use the results to validate the 20% default threshold and document when
   users should disable call-graph collection.
 
+### Release verification (completed)
+
+- Full test and compatibility matrix passes on Python 3.9–3.12 in GitHub
+  Actions.
+- Local sdist and wheel builds, wheel installation, clean import, CLI help,
+  schema migration tests, privacy review, and overhead benchmark pass.
+- The package remains `0.1.0.dev0`; v1.0 API stabilization and release
+  publication remain future work.
+
 ## Phase 5 — later collectors and v1.0 stabilization
 
 Implement one integration at a time, with its own commit sequence and

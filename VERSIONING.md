@@ -15,6 +15,15 @@ core design is finalized.
 - A schema change requires a migration path or a documented breaking-change
   note before release.
 
+## Current v1 schema/API baseline
+
+The persisted profile, baseline, and history formats are currently at
+`schema_version: 1`. Version 1 guarantees deterministic JSON serialization,
+explicit rejection of unsupported future schemas, and compatibility for
+records that omit the schema field as version 1. The public v0.x API is still
+developmental; these schema guarantees do not imply that the Python API is
+frozen until the 1.0 release.
+
 ## Release checklist
 
 Before a release:

@@ -8,6 +8,11 @@ All notable changes to RegScope are documented here.
   artifact flow.
 - Clarified baseline privacy, retention, missing-artifact behavior, and local
   reproduction steps.
+- Completed release verification for the Python 3.9–3.12 CI matrix, sdist and
+  wheel installation, CLI entry points, schema migration checks, and overhead
+  benchmarking.
+- Confirmed the current development release remains `0.1.0.dev0`; no 1.0.0
+  compatibility promise is being claimed yet.
 - Continued v0.1 release-readiness work.
 
 ## 0.1.0.dev0

@@ -127,8 +127,38 @@ class DemoHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def send_html(self, body: str, status: int = 200) -> None:
+        encoded = body.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
+
     def do_GET(self) -> None:
         started = perf_counter()
+        if self.path == "/docs":
+            self.send_html(
+                """<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>RegScope SQLite Demo</title></head>
+<body>
+  <h1>RegScope SQLite Demo</h1>
+  <p>This sample API runs a tracked SQLite report query.</p>
+  <h2>Endpoints</h2>
+  <ul>
+    <li><a href="/health"><code>GET /health</code></a> — service status</li>
+    <li><a href="/report"><code>GET /report</code></a> — heavy customer report and RegScope metrics</li>
+    <li><code>GET /docs</code> — this page</li>
+  </ul>
+  <h2>Tracked function</h2>
+  <p><code>heavy_customer_report()</code> is measured for duration,
+  exceptions, and Python call-graph activity.</p>
+  <p>Profiles and baselines are written to <code>.regscope-demo/</code>.</p>
+</body>
+</html>"""
+            )
+            return
         if self.path == "/health":
             self.send_json({"status": "ok"})
             return

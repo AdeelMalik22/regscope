@@ -25,3 +25,11 @@ Before a release:
 4. Build and install both sdist and wheel artifacts.
 5. Verify CLI help, baseline compatibility, and schema migration behavior.
 6. Tag the release using `v<version>`.
+
+## CI baseline compatibility
+
+CI baseline artifacts are disposable transport for schema-versioned records;
+they are not a second versioning system. A release or schema change must
+preserve the migration rules above. When the schema changes, publish a fresh
+trusted `master` artifact before expecting pull requests to compare against
+the new format.

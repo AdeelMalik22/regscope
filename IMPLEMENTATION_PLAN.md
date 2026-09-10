@@ -4,6 +4,10 @@ This plan turns `regscope_idea.md` into incremental, independently committed
 implementation work. Each milestone is completed, tested, committed, and
 pushed before the next milestone begins.
 
+The project name is locked to **RegScope**. The import package and executable
+are both `regscope`; references to `funcdna` in older planning notes are
+obsolete.
+
 ## Working rules
 
 - Keep each commit focused on one plan step or one bug fix.
@@ -128,14 +132,14 @@ pushed before the next milestone begins.
 
 ### Commit 12: argparse comparison CLI
 
-- Add `funcdna compare` using only `argparse` and the core comparison engine.
+- Add `regscope compare` using only `argparse` and the core comparison engine.
 - Render the documented human-readable regression report.
 - Add machine-readable output if it can be introduced without complicating
   the core interface.
 - Test successful comparisons, detected regressions, malformed input, and
   exit status.
 
-### Commit 13: persistent CI baseline workflow design
+### Commit 13: persistent CI baseline workflow design (implemented)
 
 - Define the baseline transport before implementing the plugin: CI artifacts
   are the default persistence mechanism, downloaded before comparison and
@@ -144,8 +148,14 @@ pushed before the next milestone begins.
   PR job receives the target branch baseline.
 - Keep committed baselines and external object storage as future adapters,
   not hidden assumptions in the core API.
+- GitHub Actions publishes `regscope-baseline-master` for successful pushes to
+  `master`, retains it for 30 days, and includes hidden files when uploading
+  `.regscope`.
+- Pull-request jobs download the latest successful `master` artifact. Missing
+  artifacts remain an explicit failure for CI targets, rather than becoming a
+  false pass.
 
-### Commit 14: pytest plugin and CI exit codes
+### Commit 14: pytest plugin and CI exit codes (implemented)
 
 - Add an optional pytest integration without making pytest a runtime
   dependency.
@@ -156,7 +166,7 @@ pushed before the next milestone begins.
 - Test a fresh checkout with a downloaded baseline, missing artifacts, and
   baseline updates from the target branch.
 
-### Commit 15: instrumentation overhead benchmark
+### Commit 15: instrumentation overhead benchmark (implemented)
 
 - Benchmark tracking against an untracked synthetic deep-recursion and
   high-call-count workload across the supported Python versions.

@@ -20,6 +20,7 @@ dependency is unavailable.
 - `tests/`: focused unit and integration tests
 - `regscope_idea.md`: product specification
 - `IMPLEMENTATION_PLAN.md`: ordered implementation roadmap
+- `.github/workflows/ci.yml`: test matrix and trusted baseline artifact flow
 
 Add new files to the directory responsible for their concern. Avoid placing
 feature modules directly in the package root unless they are package-level
@@ -47,6 +48,11 @@ Run the test suite from the repository root:
 
 The project’s declared runtime dependencies must remain empty. Development
 tools may be listed under the `dev` optional extra.
+
+The CI baseline workflow publishes artifacts only from trusted `master`
+pushes. Do not enable baseline updates on pull requests, including forked pull
+requests. Generated `.regscope` files belong in the artifact flow and should
+not be committed.
 
 ## Commit and push workflow
 

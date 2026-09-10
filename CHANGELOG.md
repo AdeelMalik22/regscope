@@ -4,7 +4,11 @@ All notable changes to RegScope are documented here.
 
 ## Unreleased
 
-- Continued v0.1 development and release-readiness work.
+- Documented and remotely verified the trusted GitHub Actions baseline
+  artifact flow.
+- Clarified baseline privacy, retention, missing-artifact behavior, and local
+  reproduction steps.
+- Continued v0.1 release-readiness work.
 
 ## 0.1.0.dev0
 
@@ -14,4 +18,3 @@ All notable changes to RegScope are documented here.
 - Added structured JSON profiles, bounded baselines, fingerprints, comparison
   reports, historical trends, CLI commands, and pytest integration.
 - Added trusted CI baseline artifact workflows.
-

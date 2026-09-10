@@ -15,3 +15,14 @@ it does not contain arguments, SQL text, request data, Redis keys, or results.
 Records without `schema_version` are read as version 1 for migration from the
 initial format. New records always include the field. `HistoryStore(max_points=N)`
 retains only the newest N records for each function.
+
+## CI artifact usage
+
+GitHub Actions stores generated baseline and history files in the
+`regscope-baseline-master` artifact rather than committing them to the
+repository. The artifact is published only by successful pushes to trusted
+`master` and retained for 30 days. Pull-request jobs consume the latest
+successful artifact and never update it.
+
+Malformed history or baseline files produce an explicit storage error. They
+are not silently discarded or treated as an empty baseline.

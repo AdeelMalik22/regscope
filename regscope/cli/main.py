@@ -8,6 +8,7 @@ from typing import List, Optional, Sequence
 
 from ..core.comparison import DEFAULT_THRESHOLD, compare
 from ..models import Baseline, BehaviorProfile
+from .trend import report
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -17,6 +18,9 @@ def build_parser() -> argparse.ArgumentParser:
     compare_parser.add_argument("--baseline", required=True, type=Path)
     compare_parser.add_argument("--current", required=True, type=Path)
     compare_parser.add_argument("--threshold", type=float, default=DEFAULT_THRESHOLD)
+    trend_parser = subparsers.add_parser("trend", help="report historical behavior trends")
+    trend_parser.add_argument("--directory", type=Path, default=Path(".regscope"))
+    trend_parser.add_argument("--function", required=True)
     return parser
 
 
@@ -24,6 +28,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "compare":
         return _compare(args.baseline, args.current, args.threshold)
+    if args.command == "trend":
+        return report(args.directory, args.function)
     return 2
 
 

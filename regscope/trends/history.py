@@ -21,6 +21,7 @@ class TrendPoint:
     call_count: int
     exceptions: int
     fingerprint: str
+    schema_version: int = 1
 
     @classmethod
     def from_profile(
@@ -42,6 +43,7 @@ class TrendPoint:
     @classmethod
     def from_json(cls, value: str) -> "TrendPoint":
         data = json.loads(value)
+        data.setdefault("schema_version", 1)
         return cls(**data)
 
 
@@ -58,8 +60,11 @@ class TrendSummary:
 class HistoryStore:
     """Store append-only trend points in one JSONL file per function."""
 
-    def __init__(self, directory: Union[str, Path]) -> None:
+    def __init__(self, directory: Union[str, Path], max_points: Optional[int] = None) -> None:
+        if max_points is not None and max_points < 1:
+            raise ValueError("max_points must be at least 1")
         self.directory = Path(directory)
+        self.max_points = max_points
 
     def path_for(self, function: str) -> Path:
         digest = hashlib.sha256(function.encode("utf-8")).hexdigest()[:16]
@@ -68,8 +73,15 @@ class HistoryStore:
     def record(self, profile: BehaviorProfile, recorded_at: Optional[str] = None) -> TrendPoint:
         self.directory.mkdir(parents=True, exist_ok=True)
         point = TrendPoint.from_profile(profile, recorded_at=recorded_at)
-        with self.path_for(profile.function).open("a", encoding="utf-8") as handle:
-            handle.write(point.to_json() + "\n")
+        points = self.load(profile.function)
+        points.append(point)
+        if self.max_points is not None:
+            points = points[-self.max_points :]
+        temporary = self.path_for(profile.function).with_suffix(".tmp")
+        temporary.write_text(
+            "".join(item.to_json() + "\n" for item in points), encoding="utf-8"
+        )
+        temporary.replace(self.path_for(profile.function))
         return point
 
     def load(self, function: str) -> List[TrendPoint]:

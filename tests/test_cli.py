@@ -29,3 +29,14 @@ def test_cli_returns_failure_for_regression(tmp_path, capsys) -> None:
 
     assert main(["compare", "--baseline", str(baseline), "--current", str(current)]) == 1
     assert "regression detected" in capsys.readouterr().out
+
+
+def test_cli_reports_trend(tmp_path, capsys) -> None:
+    from regscope.models import BehaviorProfile
+    from regscope.trends import HistoryStore
+
+    store = HistoryStore(tmp_path)
+    store.record(BehaviorProfile(function="example.work", duration_ns=100))
+
+    assert main(["trend", "--directory", str(tmp_path), "--function", "example.work"]) == 0
+    assert "RegScope Trend" in capsys.readouterr().out

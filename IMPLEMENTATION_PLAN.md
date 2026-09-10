@@ -187,7 +187,7 @@ still requires implementation or a release decision.
   Actions.
 - Local sdist and wheel builds, wheel installation, clean import, CLI help,
   schema migration tests, privacy review, and overhead benchmark pass.
-- The package is `0.1.0.dev1`; v1.0 API stabilization and release
+- The package is `0.1.0`; v1.0 API stabilization and release
   publication remain future work.
 
 ## Phase 5 — later collectors and v1.0 stabilization

@@ -2,7 +2,8 @@
 
 RegScope uses semantic versioning once the public API reaches 1.0. Until then,
 development releases use the `0.1.0.devN` style and may change APIs while the
-core design is finalized.
+core design is finalized. `0.1.0.dev1` is an alpha development release and
+does not promise a frozen public API.
 
 ## Compatibility guarantees
 

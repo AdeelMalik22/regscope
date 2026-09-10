@@ -11,9 +11,15 @@ All notable changes to RegScope are documented here.
 - Completed release verification for the Python 3.9–3.12 CI matrix, sdist and
   wheel installation, CLI entry points, schema migration checks, and overhead
   benchmarking.
-- Confirmed the current development release remains `0.1.0.dev0`; no 1.0.0
+- Confirmed the current development release is `0.1.0.dev1`; no 1.0.0
   compatibility promise is being claimed yet.
 - Continued v0.1 release-readiness work.
+
+## 0.1.0.dev1
+
+- Alpha development release for early users and CI validation.
+- Includes tracking, comparison, optional collectors, historical trends,
+  pytest integration, and trusted CI baseline artifacts.
 
 ## 0.1.0.dev0
 

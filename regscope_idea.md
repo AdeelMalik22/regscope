@@ -1,7 +1,7 @@
 # RegScope — Product Specification
 
 **Status:** Product specification finalized. RegScope implementation is active
-and the current package is an early `0.1.0.dev0` release.
+and the current package is an early `0.1.0.dev1` alpha release.
 
 This document contains everything decided so far. It's meant to be handed to an AI (or a human) to produce a concrete implementation plan and begin work.
 

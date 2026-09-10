@@ -7,6 +7,26 @@ code versions.
 RegScope does not prove that two functions are mathematically equivalent. It
 reports differences in behavior observed during the runs that were recorded.
 
+## In plain language
+
+RegScope is like a before-and-after checkup for a Python function. You place
+`@track` above a function, run your normal tests, and RegScope quietly records
+useful facts about that run: how long the function took, whether it failed,
+which Python functions it called, and—when configured—how many database,
+HTTP, or Redis operations it made.
+
+When the function runs again after a code change, RegScope compares the new
+checkup with earlier runs. It can warn you that a function became slower,
+started raising errors, made more database queries, or used more memory. In
+CI, that warning can fail the build so a performance or behavior regression is
+noticed before the change is released.
+
+It does not change what your function returns, and it does not decide whether
+two implementations are mathematically identical. It compares what happened
+during the test cases you actually ran. It also does not save function
+arguments, return values, SQL text, URLs, request bodies, Redis keys, or Redis
+values.
+
 ## Current status
 
 The early v0.1 core supports:
@@ -26,7 +46,7 @@ The early v0.1 core supports:
 from regscope import track
 
 
-@track(baseline_dir=".regscope")
+@track
 def calculate_total(values: list[int]) -> int:
     return sum(values)
 
@@ -54,7 +74,7 @@ supported transparently:
 from regscope import track
 
 
-@track(baseline_dir=".regscope")
+@track
 async def fetch_value() -> int:
     return 42
 ```

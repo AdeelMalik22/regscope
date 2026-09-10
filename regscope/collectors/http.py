@@ -8,7 +8,11 @@ from typing import Any, Callable, Optional
 
 
 class HTTPCollector:
-    """Count outgoing ``requests`` calls without recording request data."""
+    """Count outgoing ``requests`` calls without recording request data.
+
+    The requests hook is process-global while attached. Do not attach multiple
+    HTTP collectors concurrently; use one collector per tracked execution.
+    """
 
     def __init__(self) -> None:
         self._requests: Optional[Any] = None

@@ -8,7 +8,11 @@ from typing import Any, Callable, Optional
 
 
 class RedisCollector:
-    """Count redis-py commands without recording keys, values, or arguments."""
+    """Count redis-py commands without recording keys, values, or arguments.
+
+    The redis-py hook is process-global while attached. Do not attach multiple
+    Redis collectors concurrently; use one collector per tracked execution.
+    """
 
     def __init__(self) -> None:
         self._redis: Optional[Any] = None

@@ -88,6 +88,10 @@ silently treating the missing baseline as a pass.
 
 - `sys.setprofile()` is process-global. RegScope restores an existing profiler,
   but concurrent profiler ownership is not yet supported.
+- HTTP and Redis collectors temporarily replace process-global library hooks.
+  They restore the hook that was present when attached, are thread-safe for
+  counting calls, and should not be attached concurrently by multiple
+  tracked executions.
 - Profiles describe observed executions, not all possible behavior.
 - The CI artifact workflow is validated on trusted `master` runs; a real
   pull-request event is still required to exercise GitHub's fork permissions

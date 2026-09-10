@@ -1,4 +1,5 @@
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -45,3 +46,19 @@ def test_store_uses_atomic_json_file(tmp_path: Path) -> None:
 def test_store_rejects_invalid_capacity(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="at least 1"):
         BaselineStore(tmp_path, max_runs=0)
+
+
+def test_store_serializes_concurrent_appends(tmp_path: Path) -> None:
+    store = BaselineStore(tmp_path, max_runs=20)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        list(
+            executor.map(
+                lambda duration: store.append(make_profile(duration_ns=duration)),
+                range(20),
+            )
+        )
+
+    loaded = store.load("example.work")
+    assert len(loaded.runs) == 20
+    assert sorted(run.duration_ns for run in loaded.runs) == list(range(20))

@@ -5,14 +5,19 @@ from __future__ import annotations
 import hashlib
 import os
 import tempfile
+import threading
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional
+from typing import ClassVar, Dict, Iterator, Optional
 
 from ..models import Baseline, BehaviorProfile
 
 
 class BaselineStore:
     """Store one bounded baseline file per tracked function."""
+
+    _thread_locks: ClassVar[Dict[str, threading.RLock]] = {}
+    _thread_locks_guard: ClassVar[threading.Lock] = threading.Lock()
 
     def __init__(self, directory: os.PathLike[str] | str, max_runs: int = 5) -> None:
         if max_runs < 1:
@@ -49,8 +54,47 @@ class BaselineStore:
         return destination
 
     def append(self, profile: BehaviorProfile) -> Baseline:
-        baseline = self.load(profile.function)
-        baseline.max_runs = self.max_runs
-        baseline.add(profile)
-        self.save(baseline)
-        return baseline
+        with self._append_lock(profile.function):
+            baseline = self.load(profile.function)
+            baseline.max_runs = self.max_runs
+            baseline.add(profile)
+            self.save(baseline)
+            return baseline
+
+    @contextmanager
+    def _append_lock(self, function: str) -> Iterator[None]:
+        path = self.path_for(function)
+        with self._thread_lock(path):
+            self.directory.mkdir(parents=True, exist_ok=True)
+            lock_path = path.with_suffix(".lock")
+            with lock_path.open("a+", encoding="utf-8") as lock_file:
+                _lock_file(lock_file)
+                try:
+                    yield
+                finally:
+                    _unlock_file(lock_file)
+
+    @classmethod
+    @contextmanager
+    def _thread_lock(cls, path: Path) -> Iterator[None]:
+        key = str(path)
+        with cls._thread_locks_guard:
+            lock = cls._thread_locks.setdefault(key, threading.RLock())
+        with lock:
+            yield
+
+
+def _lock_file(handle: object) -> None:
+    try:
+        import fcntl
+    except ImportError:
+        return
+    fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+
+
+def _unlock_file(handle: object) -> None:
+    try:
+        import fcntl
+    except ImportError:
+        return
+    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)

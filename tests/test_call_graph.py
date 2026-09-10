@@ -15,8 +15,8 @@ def test_collect_call_graph_counts_nested_calls() -> None:
     result, graph = collect_call_graph(parent)
 
     assert result == "done"
-    assert graph["test_call_graph.test_collect_call_graph_counts_nested_calls.<locals>.parent"] == 1
-    assert graph["test_call_graph.test_collect_call_graph_counts_nested_calls.<locals>.child"] == 1
+    assert next(value for name, value in graph.items() if name.endswith(".parent")) == 1
+    assert next(value for name, value in graph.items() if name.endswith(".child")) == 1
 
 
 def test_collect_call_graph_restores_existing_profiler() -> None:

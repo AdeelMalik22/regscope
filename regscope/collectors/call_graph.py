@@ -87,4 +87,5 @@ async def collect_async_call_graph(
 
 def _frame_name(frame: FrameType) -> str:
     module = frame.f_globals.get("__name__", "__main__")
-    return f"{module}.{frame.f_code.co_qualname}"
+    qualified_name = getattr(frame.f_code, "co_qualname", frame.f_code.co_name)
+    return f"{module}.{qualified_name}"

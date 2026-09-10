@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from contextvars import ContextVar
 from inspect import iscoroutinefunction
 from functools import wraps
 from os import PathLike
@@ -59,6 +60,12 @@ def track(
 
     store = BaselineStore(config.baseline_dir, max_runs=config.max_runs)
     history = HistoryStore(config.history_dir)
+    current_profile: ContextVar[Optional[BehaviorProfile]] = ContextVar(
+        "regscope_current_profile", default=None
+    )
+    current_comparison: ContextVar[Any] = ContextVar(
+        "regscope_current_comparison", default=None
+    )
 
     @wraps(function)
     def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -81,14 +88,18 @@ def track(
                 call_graph=graph,
                 metrics=metrics,
             )
+            current_profile.set(wrapper.last_profile)
             wrapper.last_comparison = compare(
                 wrapper.last_profile, store.load(wrapper.last_profile.function)
             )
+            current_comparison.set(wrapper.last_comparison)
             store.append(wrapper.last_profile)
             history.record(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]
+    wrapper.get_current_profile = current_profile.get  # type: ignore[attr-defined]
+    wrapper.get_current_comparison = current_comparison.get  # type: ignore[attr-defined]
     return cast(Function[T], wrapper)
 
 
@@ -97,6 +108,12 @@ def _track_async(
 ) -> Any:
     store = BaselineStore(config.baseline_dir, max_runs=config.max_runs)
     history = HistoryStore(config.history_dir)
+    current_profile: ContextVar[Optional[BehaviorProfile]] = ContextVar(
+        "regscope_current_profile", default=None
+    )
+    current_comparison: ContextVar[Any] = ContextVar(
+        "regscope_current_comparison", default=None
+    )
 
     @wraps(function)
     async def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -119,12 +136,16 @@ def _track_async(
                 call_graph=graph,
                 metrics=metrics,
             )
+            current_profile.set(wrapper.last_profile)
             wrapper.last_comparison = compare(
                 wrapper.last_profile, store.load(wrapper.last_profile.function)
             )
+            current_comparison.set(wrapper.last_comparison)
             store.append(wrapper.last_profile)
             history.record(wrapper.last_profile)
 
     wrapper.last_profile = None  # type: ignore[attr-defined]
     wrapper.last_comparison = None  # type: ignore[attr-defined]
+    wrapper.get_current_profile = current_profile.get  # type: ignore[attr-defined]
+    wrapper.get_current_comparison = current_comparison.get  # type: ignore[attr-defined]
     return cast(Function[T], wrapper)

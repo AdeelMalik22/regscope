@@ -49,6 +49,13 @@ async def fetch_value() -> int:
     return 42
 ```
 
+After a call, `function.get_current_profile()` and
+`function.get_current_comparison()` return values stored in the current
+`contextvars` context. These accessors are task-safe for concurrent async
+invocations. The legacy `function.last_profile` and
+`function.last_comparison` attributes remain available as compatibility
+snapshots, but can be overwritten by another concurrent invocation.
+
 Each tracked function writes a bounded JSON baseline to the configured
 directory. The default directory is `.regscope`. Profiles contain structured
 metrics and call counts; they do not capture function arguments or sensitive
